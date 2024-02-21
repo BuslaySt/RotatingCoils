@@ -178,7 +178,6 @@ def start_record_data():
 	# analogue offset = 0 V
 	status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chARange, 0)
 	assert_pico_ok(status["setChA"])
-	print(status["setChA"])
 	
 	# Настройка канала B
 	# handle = chandle
@@ -189,14 +188,12 @@ def start_record_data():
 	# analogue offset = 0 V
 	status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chBRange, 0)
 	assert_pico_ok(status["setChB"])
-	print(status["setChB"])
 	
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
 	status["maximumValue"] = ps.ps5000aMaximumValue(chandle,
 	ctypes.byref(maxADC))
 	assert_pico_ok(status["maximumValue"])
-	print(status["maximumValue"])
 
 	# Установка количества сэмплов до и после срабатывания триггера
 	preTriggerSamples = 100
@@ -209,14 +206,11 @@ def start_record_data():
 	returnedMaxSamples = ctypes.c_int32()
 	status["getTimebase2"] = ps.ps5000aGetTimebase2(chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
 	assert_pico_ok(status["getTimebase2"])
-	print(status["getTimebase2"])
 	
 	# Запуск сбора данных
 	status["runBlock"] = ps.ps5000aRunBlock(chandle, preTriggerSamples, postTriggerSamples, timebase, None, 0, None, None)
 	assert_pico_ok(status["runBlock"])
-	print(status["runBlock"])
 	
-	'''
 	# Ожидание готовности данных
 	ready = ctypes.c_int16(0)
 	check = ctypes.c_int16(0)
@@ -248,14 +242,11 @@ def start_record_data():
 	# Получение данных из осциллографа в созданные буферы
 	status["getValues"] = ps.ps5000aGetValues(chandle, 0, ctypes.byref(cmaxSamples), 0, 0, 0, ctypes.byref(overflow))
 	assert_pico_ok(status["getValues"])
-	
+		
 	# Преобразование отсчетов АЦП в мВ
 	adc2mVChAMax = adc2mV(bufferAMax, chARange, maxADC)
 	adc2mVChBMax = adc2mV(bufferBMax, chBRange, maxADC)
 	
-
-	'''	
-
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
 	global chandle, status
@@ -266,7 +257,6 @@ def stop_record_data():
 	# Закрытие и отключение осциллографа
 	status["close"]=ps.ps5000aCloseUnit(chandle)
 	assert_pico_ok(status["close"])
-	print(status["close"])
 	print("Data recording stopped")
 
 
