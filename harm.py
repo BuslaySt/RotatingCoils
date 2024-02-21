@@ -253,6 +253,16 @@ def start_record_data():
 	adc2mVChBMax = adc2mV(bufferBMax, chBRange, maxADC)
 	ic(adc2mVChAMax)
 	ic(adc2mVChBMax)
+
+	# Create time data
+	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
+
+	# plot data from channel A and B
+	plt.plot(time, adc2mVChAMax[:])
+	plt.plot(time, adc2mVChBMax[:])
+	plt.xlabel('Time (ns)')
+	plt.ylabel('Voltage (mV)')
+	plt.show()
 	
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
