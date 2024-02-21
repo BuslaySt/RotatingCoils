@@ -1,3 +1,5 @@
+from icecream import ic # Для дебага
+
 from PyQt5 import QtWidgets  # , QtGui, QtCore
 #from PyQt5.QtCore import QThread, QObject
 from PyQt5.QtGui import *
@@ -152,12 +154,11 @@ def start_record_data():
 	global chandle, status
 	# Подключение к осциллографу
 	# Установка разрешения 12 бит
-	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 1
-	
+	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
+		
 	# Получение статуса и chandle для дальнейшего использования
-	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle),None, resolution) # status["openunit"] == 1
-	
-	assert_pico_ok(status["openunit"])
+	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle),None, resolution) # status["openunit"] == 0
+	ic(status["openunit"])
 	try:
 		assert_pico_ok(status["openunit"])
 	except: # PicoNotOkError:
@@ -177,6 +178,7 @@ def start_record_data():
 	chARange = ps.PS5000A_RANGE["PS5000A_20V"]
 	# analogue offset = 0 V
 	status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chARange, 0)
+	ic(status["setChA"])
 	assert_pico_ok(status["setChA"])
 	
 	# Настройка канала B
@@ -187,6 +189,7 @@ def start_record_data():
 	chBRange = ps.PS5000A_RANGE["PS5000A_2V"]
 	# analogue offset = 0 V
 	status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chBRange, 0)
+	ic(status["setChB"])
 	assert_pico_ok(status["setChB"])
 	
 	# Получение максимального количества сэмплов АЦП
@@ -242,10 +245,14 @@ def start_record_data():
 	# Получение данных из осциллографа в созданные буферы
 	status["getValues"] = ps.ps5000aGetValues(chandle, 0, ctypes.byref(cmaxSamples), 0, 0, 0, ctypes.byref(overflow))
 	assert_pico_ok(status["getValues"])
-		
+
 	# Преобразование отсчетов АЦП в мВ
+	ic(bufferAMax, chARange, maxADC)
 	adc2mVChAMax = adc2mV(bufferAMax, chARange, maxADC)
+	ic(bufferBMax, chBRange, maxADC)
 	adc2mVChBMax = adc2mV(bufferBMax, chBRange, maxADC)
+	ic(adc2mVChAMax)
+	ic(adc2mVChBMax)
 	
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
