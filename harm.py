@@ -110,7 +110,7 @@ def calcTime():
 	motorTurns = int(application.ui.Turns.text())
 	rotatingTime = motorTurns/motorSpeed*60
 	application.ui.Time.setText(str(rotatingTime))
-	print(rotatingTime)
+	ic(rotatingTime)
 
 def updateInterval():
 	global timeBase, interval, resolution
