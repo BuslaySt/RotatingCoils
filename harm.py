@@ -52,10 +52,7 @@ sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", 
 
 # Создание объектов chandle, status
 chandle = ctypes.c_int16()
-ic(type(chandle))
 status = {}
-ic(type(status))
-
 
 # ---------- Functions ----------
 def rotate():
@@ -113,7 +110,6 @@ def calcTime():
 	motorTurns = int(application.ui.Turns.text())
 	rotatingTime = motorTurns/motorSpeed*60
 	application.ui.Time.setText(str(rotatingTime))
-	ic(rotatingTime)
 
 def updateInterval():
 	global timeBase, interval, resolution
@@ -152,53 +148,51 @@ def calcTimeBase():
 	elif resolution == 16:
 		application.ui.SampleRate.setText(sampleRates_16bit[application.ui.Interval.currentIndex()])
 
-def setup_analogue_channels(status: dict):
+def setup_analogue_channels(status: dict) -> tuple[dict, dict]:
 	''' -- Настройка аналоговых каналов --'''
+	chRange = {}
+	
 	# Настройка канала A
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
-	ic(channel)
 	# enabled = 1
 	coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chARange = ps.PS5000A_RANGE["PS5000A_20V"]
+	chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
 	# analogue offset = 0 V
-	status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chARange, 0)
+	status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["A"], 0)
 	assert_pico_ok(status["setChA"])
 	
 	# Настройка канала B
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
-	ic(channel)	
 	# enabled = 1
 	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chBRange = ps.PS5000A_RANGE["PS5000A_2V"]
+	chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
 	# analogue offset = 0 V
-	status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chBRange, 0)
+	status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["B"], 0)
 	assert_pico_ok(status["setChB"])
 
 	# Настройка канала C
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
-	ic(channel)
 	# enabled = 1
 	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chCRange = ps.PS5000A_RANGE["PS5000A_2V"]
+	chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
 	# analogue offset = 0 V
-	status["setChC"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chCRange, 0)
+	status["setChC"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["C"], 0)
 	assert_pico_ok(status["setChC"])
 
 	# Настройка канала D
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
-	ic(channel)
 	# enabled = 1
 	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chDRange = ps.PS5000A_RANGE["PS5000A_2V"]
+	chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
 	# analogue offset = 0 V
-	status["setChD"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chDRange, 0)
+	status["setChD"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["D"], 0)
 	assert_pico_ok(status["setChD"])
 
-	return status, chARange, chBRange, chCRange, chDRange
+	return status, chRange
 
 def start_record_data():
 	''' -- Recording oscilloscope data --'''
@@ -210,7 +204,6 @@ def start_record_data():
 		
 	# Получение статуса и chandle для дальнейшего использования
 	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle),None, resolution) # status["openunit"] == 0
-	ic(status["openunit"])
 	try:
 		assert_pico_ok(status["openunit"])
 	except: # PicoNotOkError:
@@ -222,7 +215,7 @@ def start_record_data():
 		else:
 			raise assert_pico_ok(status["changePowerSource"])
 
-	status, chARange, chBRange, chCRange, chDRange = setup_analogue_channels(status)
+	status, chRange = setup_analogue_channels(status)
 
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
@@ -292,18 +285,10 @@ def start_record_data():
 	assert_pico_ok(status["getValues"])
 
 	# Преобразование отсчетов АЦП в мВ
-	ic(bufferAMax, chARange, maxADC)
-	adc2mVChAMax = adc2mV(bufferAMax, chARange, maxADC)
-	ic(bufferBMax, chBRange, maxADC)
-	adc2mVChBMax = adc2mV(bufferBMax, chBRange, maxADC)
-	ic(bufferCMax, chCRange, maxADC)
-	adc2mVChCMax = adc2mV(bufferCMax, chCRange, maxADC)
-	ic(bufferDMax, chDRange, maxADC)
-	adc2mVChDMax = adc2mV(bufferDMax, chDRange, maxADC)
-	# ic(adc2mVChAMax)
-	# ic(adc2mVChBMax)
-	# ic(adc2mVChCMax)
-	# ic(adc2mVChDMax)
+	adc2mVChAMax = adc2mV(bufferAMax, chRange["A"], maxADC)
+	adc2mVChBMax = adc2mV(bufferBMax, chRange["B"], maxADC)
+	adc2mVChCMax = adc2mV(bufferCMax, chRange["C"], maxADC)
+	adc2mVChDMax = adc2mV(bufferDMax, chRange["D"], maxADC)
 
 	# Create time data
 	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
