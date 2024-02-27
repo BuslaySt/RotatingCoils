@@ -191,7 +191,19 @@ def start_record_data():
 	status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chBRange, 0)
 	ic(status["setChB"])
 	assert_pico_ok(status["setChB"])
+
+	# Настройка канала C
+	# handle = chandle
+	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+	# enabled = 1
+	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+	chCRange = ps.PS5000A_RANGE["PS5000A_2V"]
+	# analogue offset = 0 V
+	status["setChC"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chCRange, 0)
+	ic(status["setChC"])
+	assert_pico_ok(status["setChC"])
 	
+
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
 	status["maximumValue"] = ps.ps5000aMaximumValue(chandle,
