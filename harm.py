@@ -174,25 +174,27 @@ def setup_analogue_channels(status: dict) -> tuple[dict, dict]:
 		status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["B"], 0)
 		assert_pico_ok(status["setChB"])
 
-	# Настройка канала C
-	# handle = chandle
-	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
-	# enabled = 1
-	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
-	# analogue offset = 0 V
-	status["setChC"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["C"], 0)
-	assert_pico_ok(status["setChC"])
+	if application.ui.Channel3Enable.isChecked():
+		# Настройка канала C
+		# handle = chandle
+		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+		# enabled = 1
+		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+		chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		# analogue offset = 0 V
+		status["setChC"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["C"], 0)
+		assert_pico_ok(status["setChC"])
 
-	# Настройка канала D
-	# handle = chandle
-	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
-	# enabled = 1
-	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
-	# analogue offset = 0 V
-	status["setChD"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["D"], 0)
-	assert_pico_ok(status["setChD"])
+	if application.ui.Channel4Enable.isChecked():
+		# Настройка канала D
+		# handle = chandle
+		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
+		# enabled = 1
+		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+		chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		# analogue offset = 0 V
+		status["setChD"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["D"], 0)
+		assert_pico_ok(status["setChD"])
 
 	return status, chRange
 
