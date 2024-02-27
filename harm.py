@@ -51,18 +51,18 @@ sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c",
 sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
 
 # Создание объектов chandle, status
-chandle = ctypes.c_int16()
-status = {}
+# chandle = ctypes.c_int16()
+# status = {}
 
 # ---------- Functions ----------
 def rotate():
 	''' -- Coil continious rotation --'''
 	global motorSpeed, motorAcc, motorDec, motorState, motorTurns, servo
 	try:
-		motorSpeed = int(application.ui.Speed.text())
-		motorAcc = int(application.ui.Acceleration.text())
-		motorDec = int(application.ui.Deceleration.text())
-		motorTurns = int(application.ui.Turns.text())
+		motorSpeed = int(harm.ui.Speed.text())
+		motorAcc = int(harm.ui.Acceleration.text())
+		motorDec = int(harm.ui.Deceleration.text())
+		motorTurns = int(harm.ui.Turns.text())
 		data = [0x0002, 0x0000, 0x0000, motorSpeed, motorAcc, motorDec, 0x0000, 0x0010]
 		servo.write_registers(0x6200, data)
 		print("rotating..")
@@ -88,158 +88,156 @@ def init_motor():
 	''' -- Initialize motor coil --'''
 	global servo
 	try:
-		servo = minimalmodbus.Instrument(application.ui.cbox_SerialPort.currentText(), SERVO_MB_ADDRESS)
+		servo = minimalmodbus.Instrument(harm.ui.cbox_SerialPort.currentText(), SERVO_MB_ADDRESS)
 		servo.serial.baudrate = 9600
 		servo.serial.parity = serial.PARITY_NONE
 		servo.serial.stopbits = 2
 		servo.write_register(0x0405, 0x83, functioncode=6)
-		application.ui.ServoStatus.setText("Подключен")
+		harm.ui.ServoStatus.setText("Подключен")
 		print("servo enabled")
 	except:
-		application.ui.ServoStatus.setText("Не подключен")
+		harm.ui.ServoStatus.setText("Не подключен")
 		print("servo not found")
 
 def portChanged():
 	global port, servo
-	if application.ui.cbox_SerialPort.currentIndex() != -1:
+	if harm.ui.cbox_SerialPort.currentIndex() != -1:
 		servo.close()
 
 def calcTime():
 	global rotatingTime, motorSpeed, motorTurns
-	motorSpeed = int(application.ui.Speed.text())
-	motorTurns = int(application.ui.Turns.text())
+	motorSpeed = int(harm.ui.Speed.text())
+	motorTurns = int(harm.ui.Turns.text())
 	rotatingTime = motorTurns/motorSpeed*60
-	application.ui.Time.setText(str(rotatingTime))
+	harm.ui.Time.setText(str(rotatingTime))
 
 def updateInterval():
 	global timeBase, interval, resolution
 	resolution = 0
-	if application.ui.Resolution.count() != 0:
-		resolution = int(application.ui.Resolution.currentText())
+	if harm.ui.Resolution.count() != 0:
+		resolution = int(harm.ui.Resolution.currentText())
 		if resolution in [14, 15]:
-			application.ui.Interval.clear()
-			application.ui.Interval.addItems(intervals_14bit_15bit)
+			harm.ui.Interval.clear()
+			harm.ui.Interval.addItems(intervals_14bit_15bit)
 		elif resolution == 16:
-			application.ui.Interval.clear()
-			application.ui.Interval.addItems(intervals_16bit)
-		interval = int(application.ui.Interval.currentText())
+			harm.ui.Interval.clear()
+			harm.ui.Interval.addItems(intervals_16bit)
+		interval = int(harm.ui.Interval.currentText())
 		print(resolution, interval)
 
 def resolutionUpdate():
 	global timeBase, interval, resolution, channels
-	channels[0] = application.ui.Channel1Enable.checkState()
-	channels[1] = application.ui.Channel2Enable.checkState()
-	channels[2] = application.ui.Channel3Enable.checkState()
-	channels[3] = application.ui.Channel4Enable.checkState()
+	channels[0] = harm.ui.Channel1Enable.checkState()
+	channels[1] = harm.ui.Channel2Enable.checkState()
+	channels[2] = harm.ui.Channel3Enable.checkState()
+	channels[3] = harm.ui.Channel4Enable.checkState()
 	if channels.count(2) >= 3:
-		application.ui.Resolution.clear()
-		application.ui.Resolution.addItems(['14'])
+		harm.ui.Resolution.clear()
+		harm.ui.Resolution.addItems(['14'])
 	if channels.count(2) == 2:
-		application.ui.Resolution.clear()
-		application.ui.Resolution.addItems(['14', '15'])
+		harm.ui.Resolution.clear()
+		harm.ui.Resolution.addItems(['14', '15'])
 	if channels.count(2) == 1:
-		application.ui.Resolution.clear()
-		application.ui.Resolution.addItems(['14', '15', '16 '])
+		harm.ui.Resolution.clear()
+		harm.ui.Resolution.addItems(['14', '15', '16 '])
 
 def calcTimeBase():
 	global timeBase, interval, resolution
 	if resolution in [14, 15]:
-		application.ui.SampleRate.setText(sampleRates_14bit_15bit[application.ui.Interval.currentIndex()])
+		harm.ui.SampleRate.setText(sampleRates_14bit_15bit[harm.ui.Interval.currentIndex()])
 	elif resolution == 16:
-		application.ui.SampleRate.setText(sampleRates_16bit[application.ui.Interval.currentIndex()])
+		harm.ui.SampleRate.setText(sampleRates_16bit[harm.ui.Interval.currentIndex()])
 
-def setup_analogue_channels(status: dict) -> tuple[dict, dict]:
+def setup_analogue_channels():
 	''' -- Настройка аналоговых каналов --'''
-	chRange = {}
+	harm.chRange = {}
 	
-	if application.ui.Channel1Enable.isChecked():
+	if harm.ui.Channel1Enable.isChecked():
 		# Настройка канала A
-		# handle = chandle
+		# handle = harm.chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
 		# enabled = 1
 		coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 		chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
 		# analogue offset = 0 V
-		status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["A"], 0)
-		assert_pico_ok(status["setChA"])
+		harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["A"], 0)
+		assert_pico_ok(harm.status["setChA"])
 	
-	if application.ui.Channel2Enable.isChecked():
+	if harm.ui.Channel2Enable.isChecked():
 		# Настройка канала B
-		# handle = chandle
+		# handle = harm.chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
 		# enabled = 1
 		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 		chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
 		# analogue offset = 0 V
-		status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["B"], 0)
-		assert_pico_ok(status["setChB"])
+		harm.status["setChB"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["B"], 0)
+		assert_pico_ok(harm.status["setChB"])
 
-	if application.ui.Channel3Enable.isChecked():
+	if harm.ui.Channel3Enable.isChecked():
 		# Настройка канала C
-		# handle = chandle
+		# handle = harm.chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
 		# enabled = 1
 		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 		chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
 		# analogue offset = 0 V
-		status["setChC"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["C"], 0)
-		assert_pico_ok(status["setChC"])
+		harm.status["setChC"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["C"], 0)
+		assert_pico_ok(harm.status["setChC"])
 
-	if application.ui.Channel4Enable.isChecked():
+	if harm.ui.Channel4Enable.isChecked():
 		# Настройка канала D
-		# handle = chandle
+		# handle = harm.chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
 		# enabled = 1
 		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 		chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
 		# analogue offset = 0 V
-		status["setChD"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["D"], 0)
-		assert_pico_ok(status["setChD"])
+		harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["D"], 0)
+		assert_pico_ok(harm.status["setChD"])
 
-	return status, chRange
+	return chRange
 
-def setup_digital_channels(status: dict) -> dict:
+def setup_digital_channels():
 	''' -- Настройка цифровых каналов --'''
 	digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
 	ic(digital_port0)
 	# Set up digital port
-	# handle = chandle
+	# handle = harm.chandle
 	# channel = ps5000a_DIGITAL_PORT0 = 0x80
 	# enabled = 1
 	# logicLevel = 10000
-	status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(chandle, digital_port0, 1, 10000)
-	assert_pico_ok(status["SetDigitalPort"])
-
-	return status
+	harm.status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(harm.chandle, digital_port0, 1, 10000)
+	assert_pico_ok(harm.status["SetDigitalPort"])
 
 def start_record_data():
 	''' -- Recording oscilloscope data --'''
 
-	global chandle, status
+	# global chandle, status
 	# Подключение к осциллографу
 	# Установка разрешения 12 бит
 	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
 		
 	# Получение статуса и chandle для дальнейшего использования
-	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle), None, resolution) # 
+	harm.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(harm.chandle), None, resolution) # 
 	try:
-		assert_pico_ok(status["openunit"])
+		assert_pico_ok(harm.status["openunit"])
 	except: # PicoNotOkError:
-		powerStatus = status["openunit"]
+		powerStatus = harm.status["openunit"]
 		if powerStatus == 286:
-			status["changePowerSource"] = ps.ps5000aChangePowerSource(chandle, powerStatus)
+			harm.status["changePowerSource"] = ps.ps5000aChangePowerSource(harm.chandle, powerStatus)
 		elif powerStatus == 282:
-			status["changePowerSource"] = ps.ps5000aChangePowerSource(chandle, powerStatus)
+			harm.status["changePowerSource"] = ps.ps5000aChangePowerSource(harm.chandle, powerStatus)
 		else:
-			raise assert_pico_ok(status["changePowerSource"])
+			raise assert_pico_ok(harm.status["changePowerSource"])
 
-	status, chRange = setup_analogue_channels(status)
-	status = setup_digital_channels(status)
+	setup_analogue_channels()
+	setup_digital_channels()
 
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
-	status["maximumValue"] = ps.ps5000aMaximumValue(chandle, ctypes.byref(maxADC))
-	assert_pico_ok(status["maximumValue"])
+	harm.status["maximumValue"] = ps.ps5000aMaximumValue(harm.chandle, ctypes.byref(maxADC))
+	assert_pico_ok(harm.status["maximumValue"])
 
 	# Установка количества сэмплов до и после срабатывания триггера
 	preTriggerSamples = 2500
@@ -250,18 +248,18 @@ def start_record_data():
 	timebase = 80000
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
-	status["getTimebase2"] = ps.ps5000aGetTimebase2(chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
-	assert_pico_ok(status["getTimebase2"])
+	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
+	assert_pico_ok(harm.status["getTimebase2"])
 	
 	# Запуск сбора данных
-	status["runBlock"] = ps.ps5000aRunBlock(chandle, preTriggerSamples, postTriggerSamples, timebase, None, 0, None, None)
-	assert_pico_ok(status["runBlock"])
+	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, preTriggerSamples, postTriggerSamples, timebase, None, 0, None, None)
+	assert_pico_ok(harm.status["runBlock"])
 	
 	# Ожидание готовности данных
 	ready = ctypes.c_int16(0)
 	check = ctypes.c_int16(0)
 	while ready.value == check.value:
-		status["isReady"] = ps.ps5000aIsReady(chandle, ctypes.byref(ready))
+		harm.status["isReady"] = ps.ps5000aIsReady(harm.chandle, ctypes.byref(ready))
 	
 	# Создание буферов данных
 	bufferAMax = (ctypes.c_int16 * maxSamples)()
@@ -277,32 +275,32 @@ def start_record_data():
 	bufferDPort0Max = (ctypes.c_int16 * maxSamples)()
 	bufferDPort0Min = (ctypes.c_int16 * maxSamples)()
 	
-	if application.ui.Channel1Enable.isChecked():
+	if harm.ui.Channel1Enable.isChecked():
 		# Указание буфера для сбора данных канала А
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
-		status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), maxSamples, 0, 0)
-		assert_pico_ok(status["setDataBuffersA"])
+		harm.status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), maxSamples, 0, 0)
+		assert_pico_ok(harm.status["setDataBuffersA"])
 	
-	if application.ui.Channel2Enable.isChecked():
+	if harm.ui.Channel2Enable.isChecked():
 		# Указание буфера для сбора данных канала B
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
-		status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), maxSamples, 0, 0)
-		assert_pico_ok(status["setDataBuffersB"])
+		harm.status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), maxSamples, 0, 0)
+		assert_pico_ok(harm.status["setDataBuffersB"])
 
-	if application.ui.Channel3Enable.isChecked():
+	if harm.ui.Channel3Enable.isChecked():
 		# Указание буфера для сбора данных канала C
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
-		status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), maxSamples, 0, 0)
-		assert_pico_ok(status["setDataBuffersC"])
+		harm.status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), maxSamples, 0, 0)
+		assert_pico_ok(harm.status["setDataBuffersC"])
 
-	if application.ui.Channel4Enable.isChecked():
+	if harm.ui.Channel4Enable.isChecked():
 		# Указание буфера для сбора данных канала D
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
-		status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), maxSamples, 0, 0)
-		assert_pico_ok(status["setDataBuffersD"])
+		harm.status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), maxSamples, 0, 0)
+		assert_pico_ok(harm.status["setDataBuffersD"])
 
 	# Указание буфера для сбора данных цифрового канала ps5000a_DIGITAL_PORT0
-	# handle = chandle
+	# handle = harm.chandle
 	# source = ps.ps5000a_DIGITAL_PORT0    # == 0x80
 	digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
 	ic(digital_port0)
@@ -311,8 +309,8 @@ def start_record_data():
 	# Buffer length = totalSamples
 	# Segment index = 0
 	# Ratio mode = ps5000a_RATIO_MODE_NONE = 0
-	status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
-	assert_pico_ok(status["SetDataBuffersDigital"])
+	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
+	assert_pico_ok(harm.status["SetDataBuffersDigital"])
 
 	print("Starting data collection...")
 
@@ -323,19 +321,19 @@ def start_record_data():
 	cmaxSamples = ctypes.c_int32(maxSamples)
 	
 	# Получение данных из осциллографа в созданные буферы
-	status["getValues"] = ps.ps5000aGetValues(chandle, 0, ctypes.byref(cmaxSamples), 0, 0, 0, ctypes.byref(overflow))
-	assert_pico_ok(status["getValues"])
+	harm.status["getValues"] = ps.ps5000aGetValues(harm.chandle, 0, ctypes.byref(cmaxSamples), 0, 0, 0, ctypes.byref(overflow))
+	assert_pico_ok(harm.status["getValues"])
 
 	print("Data collection complete.")
 
 	# Преобразование отсчетов АЦП в мВ
-	if application.ui.Channel1Enable.isChecked():
+	if harm.ui.Channel1Enable.isChecked():
 		adc2mVChAMax = adc2mV(bufferAMax, chRange["A"], maxADC)
-	if application.ui.Channel2Enable.isChecked():
+	if harm.ui.Channel2Enable.isChecked():
 		adc2mVChBMax = adc2mV(bufferBMax, chRange["B"], maxADC)
-	if application.ui.Channel3Enable.isChecked():
+	if harm.ui.Channel3Enable.isChecked():
 		adc2mVChCMax = adc2mV(bufferCMax, chRange["C"], maxADC)
-	if application.ui.Channel4Enable.isChecked():
+	if harm.ui.Channel4Enable.isChecked():
 		adc2mVChDMax = adc2mV(bufferDMax, chRange["D"], maxADC)
 
 	# Obtain binary for Digital Port 0
@@ -349,13 +347,13 @@ def start_record_data():
 	# plt.subplot(1, 2, 1)
 	plt.figure(num='PicoScope 5000a Series (A API) analogue ports')
 	plt.title('Plot of Analogue Ports vs. time')
-	if application.ui.Channel1Enable.isChecked():
+	if harm.ui.Channel1Enable.isChecked():
 		plt.plot(time, adc2mVChAMax[:])
-	if application.ui.Channel2Enable.isChecked():
+	if harm.ui.Channel2Enable.isChecked():
 		plt.plot(time, adc2mVChBMax[:])
-	if application.ui.Channel3Enable.isChecked():
+	if harm.ui.Channel3Enable.isChecked():
 		plt.plot(time, adc2mVChCMax[:])
-	if application.ui.Channel4Enable.isChecked():
+	if harm.ui.Channel4Enable.isChecked():
 		plt.plot(time, adc2mVChDMax[:])
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
@@ -379,13 +377,13 @@ def start_record_data():
 	
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
-	global chandle, status
+	# global chandle, status
 	# Остановка осциллографа
-	status["stop"] = ps.ps5000aStop(chandle)
+	status["stop"] = ps.ps5000aStop(harm.chandle)
 	assert_pico_ok(status["stop"])
 	
 	# Закрытие и отключение осциллографа
-	status["close"]=ps.ps5000aCloseUnit(chandle)
+	status["close"]=ps.ps5000aCloseUnit(harm.chandle)
 	assert_pico_ok(status["close"])
 	print("Data recording stopped")
 
@@ -405,6 +403,10 @@ class window(QtWidgets.QMainWindow):
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 		self.setFocus(True)
+
+		# Создание объектов chandle, status
+		self.chandle = ctypes.c_int16()
+		self.status = {}
 
 		for i in range(len(comPorts)):
 			self.ui.cbox_SerialPort.addItem(str(comPorts[i]))
@@ -448,9 +450,9 @@ class window(QtWidgets.QMainWindow):
 		self.ui.Channel3Enable.stateChanged.connect(resolutionUpdate)
 		self.ui.Channel4Enable.stateChanged.connect(resolutionUpdate)
 		
+if __name__ == "__main__":
+	app = QtWidgets.QApplication([])
+	harm = window()
+	harm.show()
 
-app = QtWidgets.QApplication([])
-application = window()
-application.show()
-
-sys.exit(app.exec_())
+	sys.exit(app.exec_())
