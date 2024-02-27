@@ -152,7 +152,7 @@ def setup_analogue_channels(status: dict) -> tuple[dict, dict]:
 	''' -- Настройка аналоговых каналов --'''
 	chRange = {}
 	
-	if self.ui.Channel1Enable.isChecked():
+	if application.ui.Channel1Enable.isChecked():
 		# Настройка канала A
 		# handle = chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
@@ -163,7 +163,7 @@ def setup_analogue_channels(status: dict) -> tuple[dict, dict]:
 		status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["A"], 0)
 		assert_pico_ok(status["setChA"])
 	
-	if self.ui.Channel2Enable.isChecked():
+	if application.ui.Channel2Enable.isChecked():
 		# Настройка канала B
 		# handle = chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
@@ -275,25 +275,25 @@ def start_record_data():
 	bufferDPort0Max = (ctypes.c_int16 * maxSamples)()
 	bufferDPort0Min = (ctypes.c_int16 * maxSamples)()
 	
-	if self.ui.Channel1Enable.isChecked():
+	if application.ui.Channel1Enable.isChecked():
 		# Указание буфера для сбора данных канала А
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
 		status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), maxSamples, 0, 0)
 		assert_pico_ok(status["setDataBuffersA"])
 	
-	if self.ui.Channel2Enable.isChecked():
+	if application.ui.Channel2Enable.isChecked():
 		# Указание буфера для сбора данных канала B
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
 		status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), maxSamples, 0, 0)
 		assert_pico_ok(status["setDataBuffersB"])
 
-	if self.ui.Channel3Enable.isChecked():
+	if application.ui.Channel3Enable.isChecked():
 		# Указание буфера для сбора данных канала C
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
 		status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), maxSamples, 0, 0)
 		assert_pico_ok(status["setDataBuffersC"])
 
-	if self.ui.Channel4Enable.isChecked():
+	if application.ui.Channel4Enable.isChecked():
 		# Указание буфера для сбора данных канала D
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
 		status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), maxSamples, 0, 0)
@@ -327,13 +327,13 @@ def start_record_data():
 	print("Data collection complete.")
 
 	# Преобразование отсчетов АЦП в мВ
-	if self.ui.Channel1Enable.isChecked():
+	if application.ui.Channel1Enable.isChecked():
 		adc2mVChAMax = adc2mV(bufferAMax, chRange["A"], maxADC)
-	if self.ui.Channel2Enable.isChecked():
+	if application.ui.Channel2Enable.isChecked():
 		adc2mVChBMax = adc2mV(bufferBMax, chRange["B"], maxADC)
-	if self.ui.Channel3Enable.isChecked():
+	if application.ui.Channel3Enable.isChecked():
 		adc2mVChCMax = adc2mV(bufferCMax, chRange["C"], maxADC)
-	if self.ui.Channel4Enable.isChecked():
+	if application.ui.Channel4Enable.isChecked():
 		adc2mVChDMax = adc2mV(bufferDMax, chRange["D"], maxADC)
 
 	# Obtain binary for Digital Port 0
@@ -347,13 +347,13 @@ def start_record_data():
 	# plt.subplot(1, 2, 1)
 	plt.figure(num='PicoScope 5000a Series (A API) analogue ports')
 	plt.title('Plot of Analogue Ports vs. time')
-	if self.ui.Channel1Enable.isChecked():
+	if application.ui.Channel1Enable.isChecked():
 		plt.plot(time, adc2mVChAMax[:])
-	if self.ui.Channel2Enable.isChecked():
+	if application.ui.Channel2Enable.isChecked():
 		plt.plot(time, adc2mVChBMax[:])
-	if self.ui.Channel3Enable.isChecked():
+	if application.ui.Channel3Enable.isChecked():
 		plt.plot(time, adc2mVChCMax[:])
-	if self.ui.Channel4Enable.isChecked():
+	if application.ui.Channel4Enable.isChecked():
 		plt.plot(time, adc2mVChDMax[:])
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
