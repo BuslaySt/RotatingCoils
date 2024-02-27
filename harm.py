@@ -203,7 +203,7 @@ def start_record_data():
 	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
 		
 	# Получение статуса и chandle для дальнейшего использования
-	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle),None, resolution) # status["openunit"] == 0
+	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle), None, resolution) # 
 	try:
 		assert_pico_ok(status["openunit"])
 	except: # PicoNotOkError:
@@ -228,7 +228,7 @@ def start_record_data():
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
-	timebase = 8
+	timebase = 8000
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	status["getTimebase2"] = ps.ps5000aGetTimebase2(chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
