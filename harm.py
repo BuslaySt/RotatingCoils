@@ -50,10 +50,6 @@ intervals_16bit = ["112", "208", "512", "1008", "2000"]
 sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
 sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
 
-# Создание объектов chandle, status
-chandle = ctypes.c_int16()
-status = {}
-
 # ---------- Functions ----------
 def rotate():
 	''' -- Coil continious rotation --'''
@@ -150,8 +146,15 @@ def calcTimeBase():
 		application.ui.SampleRate.setText(sampleRates_16bit[application.ui.Interval.currentIndex()])
 
 def start_record_data():
-	''' -- Recording oscilloscope data '''
-	global chandle, status
+	''' -- Recording oscilloscope data --'''
+
+	# Создание объектов chandle, status
+	chandle = ctypes.c_int16()
+	ic(chandle)
+	status = {}
+	ic(status)
+
+	# global chandle, status
 	# Подключение к осциллографу
 	# Установка разрешения 12 бит
 	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
@@ -169,7 +172,11 @@ def start_record_data():
 			status["changePowerSource"] = ps.ps5000aChangePowerSource(chandle, powerStatus)
 		else:
 			raise assert_pico_ok(status["changePowerSource"])
-	
+		
+	setup_analogue_channels(chandle, status)
+
+def setup_analogue_channels(chandle, status):
+	''' -- Настройка аналоговых каналов --'''
 	# Настройка канала A
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
