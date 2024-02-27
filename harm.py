@@ -28,16 +28,16 @@ from picosdk.functions import adc2mV, assert_pico_ok, mV2adc, splitMSODataFast
 SERVO_MB_ADDRESS = 16
 
 # ---------- General ----------
-global rotatingTime
-rotatingTime = 0
+# global rotatingTime
+# rotatingTime = 0
 
 # ---------- Motor variables ----------
-global motorSpeed, motorAcc, motorDec, motorState, motorTurns, servo
-motorSpeed = 60 # rpm
-motorAcc = 20
-motorDec = 20
-motorState = 0
-motorTurns = 10
+# global motorSpeed, motorAcc, motorDec, motorState, motorTurns, harm.servo
+# motorSpeed = 60 # rpm
+# motorAcc = 20
+# motorDec = 20
+# motorState = 0
+# motorTurns = 10
 
 # ---------- Picoscope 5442D ----------
 global sampleRates, timeBase, interval, channels, intervals, resolution
@@ -57,42 +57,37 @@ sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", 
 # ---------- Functions ----------
 def rotate():
 	''' -- Coil continious rotation --'''
-	global motorSpeed, motorAcc, motorDec, motorState, motorTurns, servo
 	try:
-		motorSpeed = int(harm.ui.Speed.text())
-		motorAcc = int(harm.ui.Acceleration.text())
-		motorDec = int(harm.ui.Deceleration.text())
-		motorTurns = int(harm.ui.Turns.text())
-		data = [0x0002, 0x0000, 0x0000, motorSpeed, motorAcc, motorDec, 0x0000, 0x0010]
-		servo.write_registers(0x6200, data)
+		harm.motorSpeed = int(harm.ui.Speed.text())
+		harm.motorAcc = int(harm.ui.Acceleration.text())
+		harm.motorDec = int(harm.ui.Deceleration.text())
+		harm.motorTurns = int(harm.ui.Turns.text())
+		data = [0x0002, 0x0000, 0x0000, harm.motorSpeed, harm.motorAcc, harm.motorDec, 0x0000, 0x0010]
+		harm.servo.write_registers(0x6200, data)
 		print("rotating..")
 	except NameError:
 		print("servo not found")
 
-
 def start():
 	''' -- Start coil rotation --'''
-	global motorSpeed, motorAcc, motorDec, motorState, motorTurns, servo
 	print("start")
 
 def stop():
 	''' -- Stop coil rotation --'''
-	global servo
 	try:
-		servo.write_register(0x6002, 0x40, functioncode=6)
+		harm.servo.write_register(0x6002, 0x40, functioncode=6)
 		print("stop")
 	except NameError:
 		print("servo not found")
 
 def init_motor():
 	''' -- Initialize motor coil --'''
-	global servo
 	try:
-		servo = minimalmodbus.Instrument(harm.ui.cbox_SerialPort.currentText(), SERVO_MB_ADDRESS)
-		servo.serial.baudrate = 9600
-		servo.serial.parity = serial.PARITY_NONE
-		servo.serial.stopbits = 2
-		servo.write_register(0x0405, 0x83, functioncode=6)
+		harm.servo = minimalmodbus.Instrument(harm.ui.cbox_SerialPort.currentText(), SERVO_MB_ADDRESS)
+		harm.servo.serial.baudrate = 9600
+		harm.servo.serial.parity = serial.PARITY_NONE
+		harm.servo.serial.stopbits = 2
+		harm.servo.write_register(0x0405, 0x83, functioncode=6)
 		harm.ui.ServoStatus.setText("Подключен")
 		print("servo enabled")
 	except:
@@ -100,16 +95,15 @@ def init_motor():
 		print("servo not found")
 
 def portChanged():
-	global port, servo
+	global port
 	if harm.ui.cbox_SerialPort.currentIndex() != -1:
-		servo.close()
+		harm.servo.close()
 
 def calcTime():
-	global rotatingTime, motorSpeed, motorTurns
-	motorSpeed = int(harm.ui.Speed.text())
-	motorTurns = int(harm.ui.Turns.text())
-	rotatingTime = motorTurns/motorSpeed*60
-	harm.ui.Time.setText(str(rotatingTime))
+	harm.motorSpeed = int(harm.ui.Speed.text())
+	harm.motorTurns = int(harm.ui.Turns.text())
+	harm.rotatingTime = harm.motorTurns/harm.motorSpeed*60
+	harm.ui.Time.setText(str(harm.rotatingTime))
 
 def updateInterval():
 	global timeBase, interval, resolution
@@ -401,6 +395,15 @@ class window(QtWidgets.QMainWindow):
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 		self.setFocus(True)
+
+		self.rotatingTime = 0
+
+		# ---------- Motor variables ----------
+		self.motorSpeed = 60 # rpm
+		self.motorAcc = 20
+		self.motorDec = 20
+		self.motorState = 0
+		self.motorTurns = 10
 
 		# Создание объектов chandle, status
 		self.chandle = ctypes.c_int16()
