@@ -50,6 +50,13 @@ intervals_16bit = ["112", "208", "512", "1008", "2000"]
 sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
 sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
 
+# Создание объектов chandle, status
+chandle = ctypes.c_int16()
+ic(type(chandle))
+status = {}
+ic(type(status))
+
+
 # ---------- Functions ----------
 def rotate():
 	''' -- Coil continious rotation --'''
@@ -148,13 +155,7 @@ def calcTimeBase():
 def start_record_data():
 	''' -- Recording oscilloscope data --'''
 
-	# Создание объектов chandle, status
-	chandle = ctypes.c_int16()
-	ic(chandle)
-	status = {}
-	ic(status)
-
-	# global chandle, status
+	global chandle, status
 	# Подключение к осциллографу
 	# Установка разрешения 12 бит
 	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
@@ -173,48 +174,54 @@ def start_record_data():
 		else:
 			raise assert_pico_ok(status["changePowerSource"])
 		
-	setup_analogue_channels(chandle, status)
-
-def setup_analogue_channels(chandle, status):
 	''' -- Настройка аналоговых каналов --'''
 	# Настройка канала A
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
+	ic(channel)
 	# enabled = 1
 	coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 	chARange = ps.PS5000A_RANGE["PS5000A_20V"]
 	# analogue offset = 0 V
 	status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chARange, 0)
-	ic(status["setChA"])
 	assert_pico_ok(status["setChA"])
 	
 	# Настройка канала B
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
+	ic(channel)	
 	# enabled = 1
 	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 	chBRange = ps.PS5000A_RANGE["PS5000A_2V"]
 	# analogue offset = 0 V
 	status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chBRange, 0)
-	ic(status["setChB"])
 	assert_pico_ok(status["setChB"])
 
 	# Настройка канала C
 	# handle = chandle
 	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+	ic(channel)
 	# enabled = 1
 	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 	chCRange = ps.PS5000A_RANGE["PS5000A_2V"]
 	# analogue offset = 0 V
 	status["setChC"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chCRange, 0)
-	ic(status["setChC"])
 	assert_pico_ok(status["setChC"])
-	
+
+	# Настройка канала D
+	# handle = chandle
+	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
+	ic(channel)
+	# enabled = 1
+	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+	chDRange = ps.PS5000A_RANGE["PS5000A_2V"]
+	# analogue offset = 0 V
+	status["setChD"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chDRange, 0)
+	assert_pico_ok(status["setChD"])
 
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
-	status["maximumValue"] = ps.ps5000aMaximumValue(chandle,
-	ctypes.byref(maxADC))
+	status["maximumValue"] = ps.ps5000aMaximumValue(chandle, ctypes.byref(maxADC))
 	assert_pico_ok(status["maximumValue"])
 
 	# Установка количества сэмплов до и после срабатывания триггера
@@ -244,16 +251,30 @@ def setup_analogue_channels(chandle, status):
 	bufferAMin = (ctypes.c_int16 * maxSamples)()
 	bufferBMax = (ctypes.c_int16 * maxSamples)()
 	bufferBMin = (ctypes.c_int16 * maxSamples)()
+	bufferCMax = (ctypes.c_int16 * maxSamples)()
+	bufferCMin = (ctypes.c_int16 * maxSamples)()
+	bufferDMax = (ctypes.c_int16 * maxSamples)()
+	bufferDMin = (ctypes.c_int16 * maxSamples)()
 	
 	# Указание буфера для сбора данных канала А
 	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
 	status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), maxSamples, 0, 0)
 	assert_pico_ok(status["setDataBuffersA"])
 	
-	# Указание буфера для сбора данных канала А
+	# Указание буфера для сбора данных канала B
 	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
 	status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), maxSamples, 0, 0)
 	assert_pico_ok(status["setDataBuffersB"])
+	
+	# Указание буфера для сбора данных канала C
+	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+	status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), maxSamples, 0, 0)
+	assert_pico_ok(status["setDataBuffersC"])
+	
+	# Указание буфера для сбора данных канала D
+	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
+	status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), maxSamples, 0, 0)
+	assert_pico_ok(status["setDataBuffersD"])
 	
 	# Выделение памяти для переполнения
 	overflow = ctypes.c_int16()
@@ -270,8 +291,14 @@ def setup_analogue_channels(chandle, status):
 	adc2mVChAMax = adc2mV(bufferAMax, chARange, maxADC)
 	ic(bufferBMax, chBRange, maxADC)
 	adc2mVChBMax = adc2mV(bufferBMax, chBRange, maxADC)
-	ic(adc2mVChAMax)
-	ic(adc2mVChBMax)
+	ic(bufferCMax, chCRange, maxADC)
+	adc2mVChCMax = adc2mV(bufferCMax, chCRange, maxADC)
+	ic(bufferDMax, chDRange, maxADC)
+	adc2mVChDMax = adc2mV(bufferDMax, chDRange, maxADC)
+	# ic(adc2mVChAMax)
+	# ic(adc2mVChBMax)
+	# ic(adc2mVChCMax)
+	# ic(adc2mVChDMax)
 
 	# Create time data
 	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
@@ -279,6 +306,8 @@ def setup_analogue_channels(chandle, status):
 	# plot data from channel A and B
 	plt.plot(time, adc2mVChAMax[:])
 	plt.plot(time, adc2mVChBMax[:])
+	plt.plot(time, adc2mVChCMax[:])
+	plt.plot(time, adc2mVChDMax[:])
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.show()
