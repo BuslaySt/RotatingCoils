@@ -142,7 +142,7 @@ def calcTimeBase():
 	elif resolution == 16:
 		harm.ui.SampleRate.setText(sampleRates_16bit[harm.ui.Interval.currentIndex()])
 
-def setup_analogue_channels():
+def setup_analogue_channels() -> None:
 	''' -- Настройка аналоговых каналов --'''
 	harm.chRange = {}
 	
@@ -190,7 +190,7 @@ def setup_analogue_channels():
 		harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["D"], 0)
 		assert_pico_ok(harm.status["setChD"])
 
-def setup_digital_channels():
+def setup_digital_channels() -> None:
 	''' -- Настройка цифровых каналов --'''
 	digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
 	ic(digital_port0)
@@ -202,13 +202,11 @@ def setup_digital_channels():
 	harm.status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(harm.chandle, digital_port0, 1, 10000)
 	assert_pico_ok(harm.status["SetDigitalPort"])
 
-def start_record_data():
+def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
-
-	# global chandle, status
 	# Подключение к осциллографу
-	# Установка разрешения 12 бит
-	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
+	# Установка разрешения 14 бит - было 12 - это разрядность?
+	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"] # resolution == 0
 		
 	# Получение статуса и chandle для дальнейшего использования
 	harm.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(harm.chandle), None, resolution) # 
@@ -337,7 +335,7 @@ def start_record_data():
 
 	# plot data from channel A and B
 	# plt.subplot(1, 2, 1)
-	plt.figure(num='PicoScope 5000a Series (A API) analogue ports')
+	plt.figure(num='PicoScope 5000a analogue ports')
 	plt.title('Plot of Analogue Ports vs. time')
 	if harm.ui.Channel1Enable.isChecked():
 		plt.plot(time, adc2mVChAMax[:])
@@ -351,7 +349,7 @@ def start_record_data():
 	plt.ylabel('Voltage (mV)')
 	
 	# plt.subplot(1, 2, 2)
-	plt.figure(num='PicoScope 5000a Series (A API) digital ports')
+	plt.figure(num='PicoScope 5000a digital ports')
 	plt.title('Plot of Digital Port 0 digital channels vs. time')
 	# plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
 	# plt.plot(time, bufferDPort0[1], label='D6')
@@ -369,16 +367,14 @@ def start_record_data():
 	
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
-	# global chandle, status
 	# Остановка осциллографа
-	status["stop"] = ps.ps5000aStop(harm.chandle)
-	assert_pico_ok(status["stop"])
+	harm.status["stop"] = ps.ps5000aStop(harm.chandle)
+	assert_pico_ok(harm.status["stop"])
 	
 	# Закрытие и отключение осциллографа
-	status["close"]=ps.ps5000aCloseUnit(harm.chandle)
-	assert_pico_ok(status["close"])
+	harm.status["close"]=ps.ps5000aCloseUnit(harm.chandle)
+	assert_pico_ok(harm.status["close"])
 	print("Data recording stopped")
-
 
 # ---------- Serial ----------
 global port
