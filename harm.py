@@ -152,28 +152,7 @@ def calcTimeBase():
 	elif resolution == 16:
 		application.ui.SampleRate.setText(sampleRates_16bit[application.ui.Interval.currentIndex()])
 
-def start_record_data():
-	''' -- Recording oscilloscope data --'''
-
-	global chandle, status
-	# Подключение к осциллографу
-	# Установка разрешения 12 бит
-	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
-		
-	# Получение статуса и chandle для дальнейшего использования
-	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle),None, resolution) # status["openunit"] == 0
-	ic(status["openunit"])
-	try:
-		assert_pico_ok(status["openunit"])
-	except: # PicoNotOkError:
-		powerStatus = status["openunit"]
-		if powerStatus == 286:
-			status["changePowerSource"] = ps.ps5000aChangePowerSource(chandle, powerStatus)
-		elif powerStatus == 282:
-			status["changePowerSource"] = ps.ps5000aChangePowerSource(chandle, powerStatus)
-		else:
-			raise assert_pico_ok(status["changePowerSource"])
-		
+def setup_analogue_channels(status: dict):
 	''' -- Настройка аналоговых каналов --'''
 	# Настройка канала A
 	# handle = chandle
@@ -218,6 +197,32 @@ def start_record_data():
 	# analogue offset = 0 V
 	status["setChD"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chDRange, 0)
 	assert_pico_ok(status["setChD"])
+
+	return status, chARange, chBRange, chCRange, chDRange
+
+def start_record_data():
+	''' -- Recording oscilloscope data --'''
+
+	global chandle, status
+	# Подключение к осциллографу
+	# Установка разрешения 12 бит
+	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_12BIT"] # resolution == 0
+		
+	# Получение статуса и chandle для дальнейшего использования
+	status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(chandle),None, resolution) # status["openunit"] == 0
+	ic(status["openunit"])
+	try:
+		assert_pico_ok(status["openunit"])
+	except: # PicoNotOkError:
+		powerStatus = status["openunit"]
+		if powerStatus == 286:
+			status["changePowerSource"] = ps.ps5000aChangePowerSource(chandle, powerStatus)
+		elif powerStatus == 282:
+			status["changePowerSource"] = ps.ps5000aChangePowerSource(chandle, powerStatus)
+		else:
+			raise assert_pico_ok(status["changePowerSource"])
+
+	status, chARange, chBRange, chCRange, chDRange = setup_analogue_channels(status)
 
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
