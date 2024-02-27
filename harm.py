@@ -152,25 +152,27 @@ def setup_analogue_channels(status: dict) -> tuple[dict, dict]:
 	''' -- Настройка аналоговых каналов --'''
 	chRange = {}
 	
-	# Настройка канала A
-	# handle = chandle
-	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
-	# enabled = 1
-	coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
-	# analogue offset = 0 V
-	status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["A"], 0)
-	assert_pico_ok(status["setChA"])
+	if self.ui.Channel1Enable.isChecked():
+		# Настройка канала A
+		# handle = chandle
+		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
+		# enabled = 1
+		coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+		chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
+		# analogue offset = 0 V
+		status["setChA"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["A"], 0)
+		assert_pico_ok(status["setChA"])
 	
-	# Настройка канала B
-	# handle = chandle
-	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
-	# enabled = 1
-	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-	chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
-	# analogue offset = 0 V
-	status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["B"], 0)
-	assert_pico_ok(status["setChB"])
+	if self.ui.Channel2Enable.isChecked():
+		# Настройка канала B
+		# handle = chandle
+		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
+		# enabled = 1
+		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+		chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		# analogue offset = 0 V
+		status["setChB"] = ps.ps5000aSetChannel(chandle, channel, 1, coupling_type, chRange["B"], 0)
+		assert_pico_ok(status["setChB"])
 
 	# Настройка канала C
 	# handle = chandle
@@ -195,13 +197,15 @@ def setup_analogue_channels(status: dict) -> tuple[dict, dict]:
 	return status, chRange
 
 def setup_digital_channels(status: dict) -> dict:
+	''' -- Настройка цифровых каналов --'''
 	digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
+	ic(digital_port0)
 	# Set up digital port
 	# handle = chandle
 	# channel = ps5000a_DIGITAL_PORT0 = 0x80
 	# enabled = 1
 	# logicLevel = 10000
-	status["SetDigitalPort"] = ps.ps5000aSetDigitalPort( chandle, digital_port0, 1, 10000)
+	status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(chandle, digital_port0, 1, 10000)
 	assert_pico_ok(status["SetDigitalPort"])
 
 	return status
@@ -271,35 +275,41 @@ def start_record_data():
 	bufferDPort0Max = (ctypes.c_int16 * maxSamples)()
 	bufferDPort0Min = (ctypes.c_int16 * maxSamples)()
 	
-	# Указание буфера для сбора данных канала А
-	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
-	status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), maxSamples, 0, 0)
-	assert_pico_ok(status["setDataBuffersA"])
+	if self.ui.Channel1Enable.isChecked():
+		# Указание буфера для сбора данных канала А
+		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
+		status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), maxSamples, 0, 0)
+		assert_pico_ok(status["setDataBuffersA"])
 	
-	# Указание буфера для сбора данных канала B
-	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
-	status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), maxSamples, 0, 0)
-	assert_pico_ok(status["setDataBuffersB"])
-	
-	# Указание буфера для сбора данных канала C
-	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
-	status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), maxSamples, 0, 0)
-	assert_pico_ok(status["setDataBuffersC"])
-	
-	# Указание буфера для сбора данных канала D
-	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
-	status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), maxSamples, 0, 0)
-	assert_pico_ok(status["setDataBuffersD"])
+	if self.ui.Channel2Enable.isChecked():
+		# Указание буфера для сбора данных канала B
+		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
+		status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), maxSamples, 0, 0)
+		assert_pico_ok(status["setDataBuffersB"])
+
+	if self.ui.Channel3Enable.isChecked():
+		# Указание буфера для сбора данных канала C
+		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+		status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), maxSamples, 0, 0)
+		assert_pico_ok(status["setDataBuffersC"])
+
+	if self.ui.Channel4Enable.isChecked():
+		# Указание буфера для сбора данных канала D
+		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
+		status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), maxSamples, 0, 0)
+		assert_pico_ok(status["setDataBuffersD"])
 
 	# Указание буфера для сбора данных цифрового канала ps5000a_DIGITAL_PORT0
 	# handle = chandle
 	# source = ps.ps5000a_DIGITAL_PORT0    # == 0x80
+	digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
+	ic(digital_port0)
 	# Buffer max = ctypes.byref(bufferDPort0Max)
 	# Buffer min = ctypes.byref(bufferDPort0Min)
 	# Buffer length = totalSamples
 	# Segment index = 0
 	# Ratio mode = ps5000a_RATIO_MODE_NONE = 0
-	status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(chandle, 0x80, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
+	status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
 	assert_pico_ok(status["SetDataBuffersDigital"])
 
 	print("Starting data collection...")
@@ -317,10 +327,14 @@ def start_record_data():
 	print("Data collection complete.")
 
 	# Преобразование отсчетов АЦП в мВ
-	adc2mVChAMax = adc2mV(bufferAMax, chRange["A"], maxADC)
-	adc2mVChBMax = adc2mV(bufferBMax, chRange["B"], maxADC)
-	adc2mVChCMax = adc2mV(bufferCMax, chRange["C"], maxADC)
-	adc2mVChDMax = adc2mV(bufferDMax, chRange["D"], maxADC)
+	if self.ui.Channel1Enable.isChecked():
+		adc2mVChAMax = adc2mV(bufferAMax, chRange["A"], maxADC)
+	if self.ui.Channel2Enable.isChecked():
+		adc2mVChBMax = adc2mV(bufferBMax, chRange["B"], maxADC)
+	if self.ui.Channel3Enable.isChecked():
+		adc2mVChCMax = adc2mV(bufferCMax, chRange["C"], maxADC)
+	if self.ui.Channel4Enable.isChecked():
+		adc2mVChDMax = adc2mV(bufferDMax, chRange["D"], maxADC)
 
 	# Obtain binary for Digital Port 0
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
@@ -331,24 +345,29 @@ def start_record_data():
 
 	# plot data from channel A and B
 	# plt.subplot(1, 2, 1)
+	plt.figure(num='PicoScope 5000a Series (A API) analogue ports')
 	plt.title('Plot of Analogue Ports vs. time')
-	plt.plot(time, adc2mVChAMax[:])
-	plt.plot(time, adc2mVChBMax[:])
-	plt.plot(time, adc2mVChCMax[:])
-	plt.plot(time, adc2mVChDMax[:])
+	if self.ui.Channel1Enable.isChecked():
+		plt.plot(time, adc2mVChAMax[:])
+	if self.ui.Channel2Enable.isChecked():
+		plt.plot(time, adc2mVChBMax[:])
+	if self.ui.Channel3Enable.isChecked():
+		plt.plot(time, adc2mVChCMax[:])
+	if self.ui.Channel4Enable.isChecked():
+		plt.plot(time, adc2mVChDMax[:])
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	
 	# plt.subplot(1, 2, 2)
-	plt.figure(num='PicoScope 3000 Series (A API) MSO Block Capture Example')
-	plt.title('Plot of Digital Ports digital channels vs. time')
-	plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
-	plt.plot(time, bufferDPort0[1], label='D6')
-	plt.plot(time, bufferDPort0[2], label='D5')
+	plt.figure(num='PicoScope 5000a Series (A API) digital ports')
+	plt.title('Plot of Digital Port 0 digital channels vs. time')
+	# plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
+	# plt.plot(time, bufferDPort0[1], label='D6')
+	# plt.plot(time, bufferDPort0[2], label='D5')
 	plt.plot(time, bufferDPort0[3], label='D4')
-	plt.plot(time, bufferDPort0[4], label='D3')
-	plt.plot(time, bufferDPort0[5], label='D2')
-	plt.plot(time, bufferDPort0[6], label='D1')
+	# plt.plot(time, bufferDPort0[4], label='D3')
+	# plt.plot(time, bufferDPort0[5], label='D2')
+	# plt.plot(time, bufferDPort0[6], label='D1')
 	plt.plot(time, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Logic Level')
