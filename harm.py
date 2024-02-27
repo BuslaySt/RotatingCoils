@@ -158,9 +158,9 @@ def setup_analogue_channels():
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
 		# enabled = 1
 		coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
+		harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
 		# analogue offset = 0 V
-		harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["A"], 0)
+		harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["A"], 0)
 		assert_pico_ok(harm.status["setChA"])
 	
 	if harm.ui.Channel2Enable.isChecked():
@@ -169,9 +169,9 @@ def setup_analogue_channels():
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
 		# enabled = 1
 		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
 		# analogue offset = 0 V
-		harm.status["setChB"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["B"], 0)
+		harm.status["setChB"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["B"], 0)
 		assert_pico_ok(harm.status["setChB"])
 
 	if harm.ui.Channel3Enable.isChecked():
@@ -180,9 +180,9 @@ def setup_analogue_channels():
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
 		# enabled = 1
 		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
 		# analogue offset = 0 V
-		harm.status["setChC"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["C"], 0)
+		harm.status["setChC"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["C"], 0)
 		assert_pico_ok(harm.status["setChC"])
 
 	if harm.ui.Channel4Enable.isChecked():
@@ -191,12 +191,10 @@ def setup_analogue_channels():
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
 		# enabled = 1
 		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
 		# analogue offset = 0 V
-		harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, chRange["D"], 0)
+		harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["D"], 0)
 		assert_pico_ok(harm.status["setChD"])
-
-	return chRange
 
 def setup_digital_channels():
 	''' -- Настройка цифровых каналов --'''
@@ -328,13 +326,13 @@ def start_record_data():
 
 	# Преобразование отсчетов АЦП в мВ
 	if harm.ui.Channel1Enable.isChecked():
-		adc2mVChAMax = adc2mV(bufferAMax, chRange["A"], maxADC)
+		adc2mVChAMax = adc2mV(bufferAMax, harm.chRange["A"], maxADC)
 	if harm.ui.Channel2Enable.isChecked():
-		adc2mVChBMax = adc2mV(bufferBMax, chRange["B"], maxADC)
+		adc2mVChBMax = adc2mV(bufferBMax, harm.chRange["B"], maxADC)
 	if harm.ui.Channel3Enable.isChecked():
-		adc2mVChCMax = adc2mV(bufferCMax, chRange["C"], maxADC)
+		adc2mVChCMax = adc2mV(bufferCMax, harm.chRange["C"], maxADC)
 	if harm.ui.Channel4Enable.isChecked():
-		adc2mVChDMax = adc2mV(bufferDMax, chRange["D"], maxADC)
+		adc2mVChDMax = adc2mV(bufferDMax, harm.chRange["D"], maxADC)
 
 	# Obtain binary for Digital Port 0
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
