@@ -23,7 +23,7 @@ import ctypes
 import numpy as np
 from picosdk.ps5000a import ps5000a as ps
 import matplotlib.pyplot as plt
-from picosdk.functions import adc2mV, assert_pico_ok, mV2adc
+from picosdk.functions import adc2mV, assert_pico_ok, mV2adc, splitMSODataFast
 
 SERVO_MB_ADDRESS = 16
 
@@ -241,7 +241,7 @@ def start_record_data():
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
-	timebase = 8000
+	timebase = 80000
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	status["getTimebase2"] = ps.ps5000aGetTimebase2(chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
@@ -268,8 +268,8 @@ def start_record_data():
 	bufferDMin = (ctypes.c_int16 * maxSamples)()
 
 	# Create buffers ready for assigning pointers for data collection
-	bufferDPort0Max = (ctypes.c_int16 * totalSamples)()
-	bufferDPort0Min = (ctypes.c_int16 * totalSamples)()
+	bufferDPort0Max = (ctypes.c_int16 * maxSamples)()
+	bufferDPort0Min = (ctypes.c_int16 * maxSamples)()
 	
 	# Указание буфера для сбора данных канала А
 	source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
@@ -293,14 +293,13 @@ def start_record_data():
 
 	# Указание буфера для сбора данных цифрового канала ps5000a_DIGITAL_PORT0
 	# handle = chandle
-	source = ps.ps5000a_DIGITAL_PORT0    # == 0x80
-	ic(source)
+	# source = ps.ps5000a_DIGITAL_PORT0    # == 0x80
 	# Buffer max = ctypes.byref(bufferDPort0Max)
 	# Buffer min = ctypes.byref(bufferDPort0Min)
 	# Buffer length = totalSamples
 	# Segment index = 0
 	# Ratio mode = ps5000a_RATIO_MODE_NONE = 0
-	status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(chandle, source, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
+	status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(chandle, 0x80, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
 	assert_pico_ok(status["SetDataBuffersDigital"])
 
 	print("Starting data collection...")
@@ -325,13 +324,13 @@ def start_record_data():
 
 	# Obtain binary for Digital Port 0
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
-	bufferDPort0 = splitMSODataFast(cTotalSamples, bufferDPort0Max)
+	bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
 
 	# Create time data
 	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
 
 	# plot data from channel A and B
-	plt.subplot(1, 2, 1)
+	# plt.subplot(1, 2, 1)
 	plt.title('Plot of Analogue Ports vs. time')
 	plt.plot(time, adc2mVChAMax[:])
 	plt.plot(time, adc2mVChBMax[:])
@@ -340,7 +339,7 @@ def start_record_data():
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	
-	plt.subplot(1, 2, 2)
+	# plt.subplot(1, 2, 2)
 	plt.figure(num='PicoScope 3000 Series (A API) MSO Block Capture Example')
 	plt.title('Plot of Digital Ports digital channels vs. time')
 	plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
