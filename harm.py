@@ -373,27 +373,27 @@ def start_record_data() -> None:
 
 	# Create time data
 	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
-	harm.data['time'] = time
+	harm.data['timestamp'] = time
 
 	# Преобразование отсчетов АЦП в мВ
 	if harm.ui.Channel1Enable.isChecked():
 		adc2mVChAMax = adc2mV(bufferAMax, harm.chRange["A"], maxADC)
-		data['ChA'] = adc2mVChAMax
+		data['ch_a'] = adc2mVChAMax
 	if harm.ui.Channel2Enable.isChecked():
 		adc2mVChBMax = adc2mV(bufferBMax, harm.chRange["B"], maxADC)
-		data['ChB'] = adc2mVChBMax
+		data['ch_b'] = adc2mVChBMax
 	if harm.ui.Channel3Enable.isChecked():
 		adc2mVChCMax = adc2mV(bufferCMax, harm.chRange["C"], maxADC)
-		data['ChC'] = adc2mVChCMax
+		data['ch_c'] = adc2mVChCMax
 	if harm.ui.Channel4Enable.isChecked():
 		adc2mVChDMax = adc2mV(bufferDMax, harm.chRange["D"], maxADC)
-		data['ChD'] = adc2mVChDMax
+		data['ch_d'] = adc2mVChDMax
 
 	# Obtain binary for Digital Port 0
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
 	bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
-	data['ChD0'] = bufferDPort0[0]
-	data['ChD4'] = bufferDPort0[3]
+	data['D0'] = bufferDPort0[0]
+	data['D4'] = bufferDPort0[3]
 	
 	df = pd.DataFrame(harm.data)
 	ic(df.head())
