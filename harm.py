@@ -40,15 +40,15 @@ SERVO_MB_ADDRESS = 16
 # motorTurns = 10
 
 # ---------- Picoscope 5442D ----------
-global sampleRates, timeBase, interval, channels, intervals, resolution
-resolutions = ["14", "15", "16"]
-resolution = 14
-ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V", "50 V"]
-channels = [0, 0, 0, 0]
-intervals_14bit_15bit = ["104", "200", "504", "1000", "2000"]
-intervals_16bit = ["112", "208", "512", "1008", "2000"]
-sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
-sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
+# global sampleRates, timeBase, interval, channels, intervals, resolution
+# resolutions = ["14", "15", "16"]
+# resolution = 14
+# ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V", "50 V"]
+# channels = [0, 0, 0, 0]
+# intervals_14bit_15bit = ["104", "200", "504", "1000", "2000"]
+# intervals_16bit = ["112", "208", "512", "1008", "2000"]
+# sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
+# sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
 
 # Создание объектов chandle, status
 # chandle = ctypes.c_int16()
@@ -106,41 +106,39 @@ def calcTime():
 	harm.ui.Time.setText(str(harm.rotatingTime))
 
 def updateInterval():
-	global timeBase, interval, resolution
-	resolution = 0
+	harm.resolution = 0
 	if harm.ui.Resolution.count() != 0:
-		resolution = int(harm.ui.Resolution.currentText())
-		if resolution in [14, 15]:
+		harm.resolution = int(harm.ui.Resolution.currentText())
+		if harm.resolution in [14, 15]:
 			harm.ui.Interval.clear()
-			harm.ui.Interval.addItems(intervals_14bit_15bit)
-		elif resolution == 16:
+			harm.ui.Interval.addItems(harm.intervals_14bit_15bit)
+		elif harm.resolution == 16:
 			harm.ui.Interval.clear()
-			harm.ui.Interval.addItems(intervals_16bit)
-		interval = int(harm.ui.Interval.currentText())
-		print(resolution, interval)
+			harm.ui.Interval.addItems(harm.intervals_16bit)
+		harm.interval = int(harm.ui.Interval.currentText())
+		ic(harm.resolution, harm.interval)
 
 def resolutionUpdate():
-	global timeBase, interval, resolution, channels
-	channels[0] = harm.ui.Channel1Enable.checkState()
-	channels[1] = harm.ui.Channel2Enable.checkState()
-	channels[2] = harm.ui.Channel3Enable.checkState()
-	channels[3] = harm.ui.Channel4Enable.checkState()
-	if channels.count(2) >= 3:
+	global channels
+	harm.channels[0] = harm.ui.Channel1Enable.checkState()
+	harm.channels[1] = harm.ui.Channel2Enable.checkState()
+	harm.channels[2] = harm.ui.Channel3Enable.checkState()
+	harm.channels[3] = harm.ui.Channel4Enable.checkState()
+	if harm.channels.count(2) >= 3:
 		harm.ui.Resolution.clear()
 		harm.ui.Resolution.addItems(['14'])
-	if channels.count(2) == 2:
+	if harm.channels.count(2) == 2:
 		harm.ui.Resolution.clear()
 		harm.ui.Resolution.addItems(['14', '15'])
-	if channels.count(2) == 1:
+	if harm.channels.count(2) == 1:
 		harm.ui.Resolution.clear()
 		harm.ui.Resolution.addItems(['14', '15', '16 '])
 
 def calcTimeBase():
-	global timeBase, interval, resolution
-	if resolution in [14, 15]:
-		harm.ui.SampleRate.setText(sampleRates_14bit_15bit[harm.ui.Interval.currentIndex()])
-	elif resolution == 16:
-		harm.ui.SampleRate.setText(sampleRates_16bit[harm.ui.Interval.currentIndex()])
+	if harm.resolution in [14, 15]:
+		harm.ui.SampleRate.setText(harm.sampleRates_14bit_15bit[harm.ui.Interval.currentIndex()])
+	elif harm.resolution == 16:
+		harm.ui.SampleRate.setText(harm.sampleRates_16bit[harm.ui.Interval.currentIndex()])
 
 def setup_analogue_channels() -> None:
 	''' -- Настройка аналоговых каналов --'''
@@ -205,11 +203,23 @@ def setup_digital_channels() -> None:
 def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
 	# Подключение к осциллографу
-	# Установка разрешения 14 бит - было 12 - это разрядность?
-	resolution = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"] # resolution == 0
+	# Установка разрешения
+	match harm.resolution:
+		case 14:
+			resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"]
+			ic(resolution_code)
+			ic(harm.resolution)
+		case 15:
+			resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_15BIT"]
+			ic(resolution_code)
+			ic(harm.resolution)
+		case 16:
+			resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_16BIT"]
+			ic(resolution_code)
+			ic(harm.resolution)
 		
 	# Получение статуса и chandle для дальнейшего использования
-	harm.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(harm.chandle), None, resolution) # 
+	harm.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(harm.chandle), None, resolution_code) # 
 	try:
 		assert_pico_ok(harm.status["openunit"])
 	except: # PicoNotOkError:
@@ -394,6 +404,17 @@ class window(QtWidgets.QMainWindow):
 
 		self.rotatingTime = 0
 
+		# ---------- Picoscope 5442D ----------
+		# global sampleRates, timeBase, interval, channels, intervals, resolution
+		self.resolutions = ["14", "15", "16"]
+		self.resolution = 14
+		self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V", "50 V"]
+		self.channels = [0, 0, 0, 0]
+		self.intervals_14bit_15bit = ["104", "200", "504", "1000", "2000"]
+		self.intervals_16bit = ["112", "208", "512", "1008", "2000"]
+		self.sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
+		self.sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
+
 		# ---------- Motor variables ----------
 		self.motorSpeed = 60 # rpm
 		self.motorAcc = 20
@@ -420,18 +441,13 @@ class window(QtWidgets.QMainWindow):
 		self.ui.Connect.clicked.connect(init_motor)
 		
 		# Init Pico parameters
-		#for resolution in resolutions:
-		self.ui.Resolution.addItems(resolutions)
-		#for rng in ranges:
-		self.ui.Channel1Range.addItems(ranges)
-		#for rng in ranges:
-		self.ui.Channel2Range.addItems(ranges)
-		#for rng in ranges:
-		self.ui.Channel3Range.addItems(ranges)
-		#for rng in ranges:
-		self.ui.Channel4Range.addItems(ranges)
-		self.ui.Interval.addItems(intervals_14bit_15bit)
-		self.ui.SampleRate.setText(sampleRates_14bit_15bit[0])
+		self.ui.Resolution.addItems(self.resolutions)
+		self.ui.Channel1Range.addItems(self.ranges)
+		self.ui.Channel2Range.addItems(self.ranges)
+		self.ui.Channel3Range.addItems(self.ranges)
+		self.ui.Channel4Range.addItems(self.ranges)
+		self.ui.Interval.addItems(self.intervals_14bit_15bit)
+		self.ui.SampleRate.setText(self.sampleRates_14bit_15bit[0])
 		
 		# Calculate rotation time
 		self.ui.Speed.editingFinished.connect(calcTime)
