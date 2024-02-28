@@ -2,14 +2,16 @@ from icecream import ic # Для дебага
 
 from PyQt5 import QtWidgets  # , QtGui, QtCore
 #from PyQt5.QtCore import QThread, QObject
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow
+# from PyQt5.QtGui import *
+# from PyQt5.QtWidgets import *
+# from PyQt5.QtCore import *
+# from PyQt5 import uic
+# from PyQt5.QtWidgets import QMainWindow
 
 import sys
 import time
+import pandas as pd
+import numpy as np
 
 from harmonic import Ui_MainWindow  #модуль дизайна
 
@@ -20,12 +22,9 @@ import minimalmodbus
 
 # Подключение необходимых модулей для осциллографа
 import ctypes
-import numpy as np
-from picosdk.ps5000a import ps5000a as ps
 import matplotlib.pyplot as plt
+from picosdk.ps5000a import ps5000a as ps
 from picosdk.functions import adc2mV, assert_pico_ok, mV2adc, splitMSODataFast
-
-SERVO_MB_ADDRESS = 16
 
 # ---------- General ----------
 # global rotatingTime
@@ -83,7 +82,7 @@ def stop() -> None:
 def init_motor() -> None:
 	''' -- Initialize motor coil --'''
 	try:
-		harm.servo = minimalmodbus.Instrument(harm.ui.cbox_SerialPort.currentText(), SERVO_MB_ADDRESS)
+		harm.servo = minimalmodbus.Instrument(harm.ui.cbox_SerialPort.currentText(), harm.SERVO_MB_ADDRESS)
 		harm.servo.serial.baudrate = 9600
 		harm.servo.serial.parity = serial.PARITY_NONE
 		harm.servo.serial.stopbits = 2
@@ -138,6 +137,25 @@ def calcTimeBase() -> None:
 		harm.ui.SampleRate.setText(harm.sampleRates_14bit_15bit[harm.ui.Interval.currentIndex()])
 	elif harm.resolution == 16:
 		harm.ui.SampleRate.setText(harm.sampleRates_16bit[harm.ui.Interval.currentIndex()])
+
+def open_scope_unit():
+	match harm.resolution:
+		case 14:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"]
+		case 15:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_15BIT"]
+		case 16:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_16BIT"]
+		
+	# Получение статуса и chandle для дальнейшего использования
+	harm.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(harm.chandle), None, resolution_code) # 
+	try:
+		assert_pico_ok(harm.status["openunit"])
+	except: # PicoNotOkError:
+		powerStatus = harm.status["openunit"]
+		if powerStatus == 286:
+			harm.status["changePowerSource"] = ps.ps5000aChangePowerSource(harm.chandle, powerStatus)
+		elif powerStatus == 282:
+			harm.status["changePowerSource"] = ps.ps5000aChangePowerSource(harm.chandle, powerStatus)
+		else:
+			raise assert_pico_ok(harm.status["changePowerSource"])
 
 def setup_analogue_channels() -> None:
 	''' -- Настройка аналоговых каналов --'''
@@ -252,23 +270,8 @@ def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
 	# Подключение к осциллографу
 	# Установка разрешения
-	match harm.resolution:
-		case 14:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"]
-		case 15:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_15BIT"]
-		case 16:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_16BIT"]
-		
-	# Получение статуса и chandle для дальнейшего использования
-	harm.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(harm.chandle), None, resolution_code) # 
-	try:
-		assert_pico_ok(harm.status["openunit"])
-	except: # PicoNotOkError:
-		powerStatus = harm.status["openunit"]
-		if powerStatus == 286:
-			harm.status["changePowerSource"] = ps.ps5000aChangePowerSource(harm.chandle, powerStatus)
-		elif powerStatus == 282:
-			harm.status["changePowerSource"] = ps.ps5000aChangePowerSource(harm.chandle, powerStatus)
-		else:
-			raise assert_pico_ok(harm.status["changePowerSource"])
+
+	open_scope_unit()
 
 	setup_analogue_channels()
 	setup_digital_channels()
@@ -276,7 +279,10 @@ def start_record_data() -> None:
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
 	harm.status["maximumValue"] = ps.ps5000aMaximumValue(harm.chandle, ctypes.byref(maxADC))
+	ic(harm.status["maximumValue"])
 	assert_pico_ok(harm.status["maximumValue"])
+
+	ic(harm.status)
 
 	# Установка количества сэмплов до и после срабатывания триггера
 	preTriggerSamples = 2500
@@ -446,6 +452,7 @@ class window(QtWidgets.QMainWindow):
 		self.setFocus(True)
 
 		self.rotatingTime = 0
+		self.SERVO_MB_ADDRESS = 16
 
 		# ---------- Picoscope 5442D ----------
 		# global sampleRates, timeBase, interval, channels, intervals, resolution
