@@ -344,8 +344,9 @@ def start_record_data() -> None:
 	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
 
 	# plot data from channel A and B
-	# plt.subplot(1, 2, 1)
-	plt.figure(num='PicoScope 5000a analogue ports')
+	plt.figure(num='PicoScope 5000a ports')
+
+	plt.subplot(2,1,1)
 	plt.title('Plot of Analogue Ports vs. time')
 	if harm.ui.Channel1Enable.isChecked():
 		plt.plot(time, adc2mVChAMax[:])
@@ -359,7 +360,8 @@ def start_record_data() -> None:
 	plt.ylabel('Voltage (mV)')
 	
 	# plt.subplot(1, 2, 2)
-	plt.figure(num='PicoScope 5000a digital ports')
+	# plt.figure(num='PicoScope 5000a digital ports')
+	plt.subplot(2,1,2)
 	plt.title('Plot of Digital Port 0 digital channels vs. time')
 	# plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
 	# plt.plot(time, bufferDPort0[1], label='D6')
@@ -374,6 +376,7 @@ def start_record_data() -> None:
 	plt.legend(loc="upper right")
 	
 	plt.show()
+	stop_record_data()
 	
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
