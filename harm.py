@@ -143,13 +143,14 @@ def calcTimeBase():
 def setup_analogue_channels() -> None:
 	''' -- Настройка аналоговых каналов --'''
 	harm.chRange = {}
-	
+	coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]	
+
 	if harm.ui.Channel1Enable.isChecked():
 		# Настройка канала A
 		# handle = harm.chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
 		# enabled = 1
-		coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
 		match harm.ui.Channel1Range.currentText():
 			case "10 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_10MV"]
 			case "20 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20MV"]
