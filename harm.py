@@ -150,7 +150,19 @@ def setup_analogue_channels() -> None:
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
 		# enabled = 1
 		coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
+		match harm.ui.Channel1Range.currentText():
+			case "10 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_10mV"]
+			case "20 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20mV"]
+			case "50 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_50mV"]
+			case "100 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_100mV"]
+			case "200 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_200mV"]
+			case "500 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_500mV"]
+			case "1 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_1V"]
+			case "2 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_2V"]
+			case "5 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_5V"]
+			case "10 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_10V"]
+			case "20 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
+			case "50 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_50V"]
 		# analogue offset = 0 V
 		harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["A"], 0)
 		assert_pico_ok(harm.status["setChA"])
@@ -205,18 +217,9 @@ def start_record_data() -> None:
 	# Подключение к осциллографу
 	# Установка разрешения
 	match harm.resolution:
-		case 14:
-			resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"]
-			ic(resolution_code)
-			ic(harm.resolution)
-		case 15:
-			resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_15BIT"]
-			ic(resolution_code)
-			ic(harm.resolution)
-		case 16:
-			resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_16BIT"]
-			ic(resolution_code)
-			ic(harm.resolution)
+		case 14:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"]
+		case 15:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_15BIT"]
+		case 16:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_16BIT"]
 		
 	# Получение статуса и chandle для дальнейшего использования
 	harm.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(harm.chandle), None, resolution_code) # 
@@ -358,7 +361,8 @@ def start_record_data() -> None:
 		plt.plot(time, adc2mVChDMax[:])
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
-	
+	plt.legend(loc="upper right")
+
 	# plt.subplot(1, 2, 2)
 	# plt.figure(num='PicoScope 5000a digital ports')
 	plt.subplot(2,1,2)
@@ -376,6 +380,7 @@ def start_record_data() -> None:
 	plt.legend(loc="upper right")
 	
 	plt.show()
+
 	stop_record_data()
 	
 def stop_record_data():
