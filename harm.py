@@ -95,7 +95,6 @@ def init_motor() -> None:
 		print("servo not found")
 
 def portChanged() -> None:
-	global port
 	if harm.ui.cbox_SerialPort.currentIndex() != -1:
 		harm.servo.close()
 
@@ -432,7 +431,6 @@ def stop_record_data():
 	print("Data recording stopped")
 
 # ---------- Serial ----------
-global port
 portList = serial.tools.list_ports.comports(include_links=False)
 comPorts = []
 for item in portList:
@@ -471,8 +469,8 @@ class window(QtWidgets.QMainWindow):
 		self.chandle = ctypes.c_int16()
 		self.status = {}
 
-		for i in range(len(comPorts)):
-			self.ui.cbox_SerialPort.addItem(str(comPorts[i]))
+		for port in comPorts:
+			self.ui.cbox_SerialPort.addItem(port)
 		
 		#self.ui.cbox_SerialPort.currentIndexChanged.connect(portChanged)
 		self.ui.btn_ContRotation.clicked.connect(rotate)
