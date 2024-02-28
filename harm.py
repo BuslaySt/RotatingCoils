@@ -371,43 +371,54 @@ def start_record_data() -> None:
 
 	print("Data collection complete.")
 
+	# Create time data
+	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
+	harm.data['time'] = time
+
 	# Преобразование отсчетов АЦП в мВ
 	if harm.ui.Channel1Enable.isChecked():
 		adc2mVChAMax = adc2mV(bufferAMax, harm.chRange["A"], maxADC)
+		data['ChA'] = adc2mVChAMax
 	if harm.ui.Channel2Enable.isChecked():
 		adc2mVChBMax = adc2mV(bufferBMax, harm.chRange["B"], maxADC)
+		data['ChB'] = adc2mVChBMax
 	if harm.ui.Channel3Enable.isChecked():
 		adc2mVChCMax = adc2mV(bufferCMax, harm.chRange["C"], maxADC)
+		data['ChC'] = adc2mVChCMax
 	if harm.ui.Channel4Enable.isChecked():
 		adc2mVChDMax = adc2mV(bufferDMax, harm.chRange["D"], maxADC)
+		data['ChD'] = adc2mVChDMax
 
 	# Obtain binary for Digital Port 0
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
 	bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
-
-	# Create time data
-	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
-
-	# plot data from channel A and B
+	data['ChD0'] = bufferDPort0[0]
+	data['ChD4'] = bufferDPort0[3]
+	
+	df = pd.DataFrame(harm.data)
+	ic(df.head())
+	ic(df.tail())
+	
+	# plot data from analogue and digital channels 
 	plt.figure(num='PicoScope 5000a ports')
 
-	plt.subplot(2,1,1)
+	plt.subplot(3,1,1)
 	plt.title('Plot of Analogue Ports vs. time')
 	if harm.ui.Channel1Enable.isChecked():
-		plt.plot(time, adc2mVChAMax[:])
+		plt.plot(time, adc2mVChAMax, label='A')
 	if harm.ui.Channel2Enable.isChecked():
-		plt.plot(time, adc2mVChBMax[:])
+		plt.plot(time, adc2mVChBMax[:], label='B')
+	plt.subplot(3,1,3)
 	if harm.ui.Channel3Enable.isChecked():
-		plt.plot(time, adc2mVChCMax[:])
+		plt.plot(time, adc2mVChCMax[:], label='C')
 	if harm.ui.Channel4Enable.isChecked():
-		plt.plot(time, adc2mVChDMax[:])
+		plt.plot(time, adc2mVChDMax[:], label='D')
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
 
-	# plt.subplot(1, 2, 2)
 	# plt.figure(num='PicoScope 5000a digital ports')
-	plt.subplot(2,1,2)
+	plt.subplot(3,1,3)
 	plt.title('Plot of Digital Port 0 digital channels vs. time')
 	# plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
 	# plt.plot(time, bufferDPort0[1], label='D6')
@@ -416,7 +427,7 @@ def start_record_data() -> None:
 	# plt.plot(time, bufferDPort0[4], label='D3')
 	# plt.plot(time, bufferDPort0[5], label='D2')
 	# plt.plot(time, bufferDPort0[6], label='D1')
-	plt.plot(time, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
+	# plt.plot(time, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Logic Level')
 	plt.legend(loc="upper right")
@@ -451,6 +462,8 @@ class window(QtWidgets.QMainWindow):
 		self.ui.setupUi(self)
 		self.setFocus(True)
 
+		self.data = dict()
+
 		self.rotatingTime = 0
 		self.SERVO_MB_ADDRESS = 16
 
@@ -458,7 +471,7 @@ class window(QtWidgets.QMainWindow):
 		# global sampleRates, timeBase, interval, channels, intervals, resolution
 		self.resolutions = ["14", "15", "16"]
 		self.resolution = 14
-		self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V", "50 V"]
+		self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V"]  #, "50 V"] 50V не работает
 		self.channels = [0, 0, 0, 0]
 		self.intervals_14bit_15bit = ["104", "200", "504", "1000", "2000"]
 		self.intervals_16bit = ["112", "208", "512", "1008", "2000"]
