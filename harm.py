@@ -55,7 +55,7 @@ SERVO_MB_ADDRESS = 16
 # status = {}
 
 # ---------- Functions ----------
-def rotate():
+def rotate() -> None:
 	''' -- Coil continious rotation --'''
 	try:
 		harm.motorSpeed = int(harm.ui.Speed.text())
@@ -68,11 +68,11 @@ def rotate():
 	except NameError:
 		print("servo not found")
 
-def start():
+def start() -> None:
 	''' -- Start coil rotation --'''
 	print("start")
 
-def stop():
+def stop() -> None:
 	''' -- Stop coil rotation --'''
 	try:
 		harm.servo.write_register(0x6002, 0x40, functioncode=6)
@@ -80,7 +80,7 @@ def stop():
 	except NameError:
 		print("servo not found")
 
-def init_motor():
+def init_motor() -> None:
 	''' -- Initialize motor coil --'''
 	try:
 		harm.servo = minimalmodbus.Instrument(harm.ui.cbox_SerialPort.currentText(), SERVO_MB_ADDRESS)
@@ -94,18 +94,18 @@ def init_motor():
 		harm.ui.ServoStatus.setText("Не подключен")
 		print("servo not found")
 
-def portChanged():
+def portChanged() -> None:
 	global port
 	if harm.ui.cbox_SerialPort.currentIndex() != -1:
 		harm.servo.close()
 
-def calcTime():
+def calcTime() -> None:
 	harm.motorSpeed = int(harm.ui.Speed.text())
 	harm.motorTurns = int(harm.ui.Turns.text())
 	harm.rotatingTime = harm.motorTurns/harm.motorSpeed*60
 	harm.ui.Time.setText(str(harm.rotatingTime))
 
-def updateInterval():
+def updateInterval() -> None:
 	harm.resolution = 0
 	if harm.ui.Resolution.count() != 0:
 		harm.resolution = int(harm.ui.Resolution.currentText())
@@ -118,7 +118,7 @@ def updateInterval():
 		harm.interval = int(harm.ui.Interval.currentText())
 		ic(harm.resolution, harm.interval)
 
-def resolutionUpdate():
+def resolutionUpdate() -> None:
 	global channels
 	harm.channels[0] = harm.ui.Channel1Enable.checkState()
 	harm.channels[1] = harm.ui.Channel2Enable.checkState()
@@ -134,7 +134,7 @@ def resolutionUpdate():
 		harm.ui.Resolution.clear()
 		harm.ui.Resolution.addItems(['14', '15', '16 '])
 
-def calcTimeBase():
+def calcTimeBase() -> None:
 	if harm.resolution in [14, 15]:
 		harm.ui.SampleRate.setText(harm.sampleRates_14bit_15bit[harm.ui.Interval.currentIndex()])
 	elif harm.resolution == 16:
@@ -482,12 +482,12 @@ class window(QtWidgets.QMainWindow):
 		self.ui.btn_StartRecord.clicked.connect(start_record_data)
 		self.ui.btn_StopRecord.clicked.connect(stop_record_data)
 
-
-		self.ui.Connect.clicked.connect(init_motor)
-		
+		self.ui.btn_Connect.clicked.connect(init_motor)
+				
 		# Init Pico parameters
 		self.ui.Resolution.addItems(self.resolutions)
 		self.ui.Channel1Range.addItems(self.ranges)
+
 		self.ui.Channel2Range.addItems(self.ranges)
 		self.ui.Channel3Range.addItems(self.ranges)
 		self.ui.Channel4Range.addItems(self.ranges)
