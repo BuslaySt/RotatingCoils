@@ -378,22 +378,22 @@ def start_record_data() -> None:
 	# Преобразование отсчетов АЦП в мВ
 	if harm.ui.Channel1Enable.isChecked():
 		adc2mVChAMax = adc2mV(bufferAMax, harm.chRange["A"], maxADC)
-		data['ch_a'] = adc2mVChAMax
+		harm.data['ch_a'] = adc2mVChAMax
 	if harm.ui.Channel2Enable.isChecked():
 		adc2mVChBMax = adc2mV(bufferBMax, harm.chRange["B"], maxADC)
-		data['ch_b'] = adc2mVChBMax
+		harm.data['ch_b'] = adc2mVChBMax
 	if harm.ui.Channel3Enable.isChecked():
 		adc2mVChCMax = adc2mV(bufferCMax, harm.chRange["C"], maxADC)
-		data['ch_c'] = adc2mVChCMax
+		harm.data['ch_c'] = adc2mVChCMax
 	if harm.ui.Channel4Enable.isChecked():
 		adc2mVChDMax = adc2mV(bufferDMax, harm.chRange["D"], maxADC)
-		data['ch_d'] = adc2mVChDMax
+		harm.data['ch_d'] = adc2mVChDMax
 
 	# Obtain binary for Digital Port 0
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
 	bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
-	data['D0'] = bufferDPort0[0]
-	data['D4'] = bufferDPort0[3]
+	harm.data['D0'] = bufferDPort0[0]
+	harm.data['D4'] = bufferDPort0[3]
 	
 	df = pd.DataFrame(harm.data)
 	ic(df.head())
@@ -403,26 +403,31 @@ def start_record_data() -> None:
 	plt.figure(num='PicoScope 5000a ports')
 
 	plt.subplot(3,1,1)
-	plt.title('Plot of Analogue Ports vs. time')
+	plt.title("Plot of ports' data vs. time")
 	if harm.ui.Channel1Enable.isChecked():
-		plt.plot(time, adc2mVChAMax, label='A')
+		plt.plot(time, adc2mVChAMax, label='ch A')
 	if harm.ui.Channel2Enable.isChecked():
-		plt.plot(time, adc2mVChBMax[:], label='B')
-	plt.subplot(3,1,3)
+		plt.plot(time, adc2mVChBMax[:], label='ch B')
+	plt.xlabel('Time (ns)')
+	plt.ylabel('Voltage (mV)')
+	plt.legend(loc="upper right")
+
+	plt.subplot(3,1,2)
 	if harm.ui.Channel3Enable.isChecked():
-		plt.plot(time, adc2mVChCMax[:], label='C')
+		plt.plot(time, adc2mVChCMax[:], label='ch C')
 	if harm.ui.Channel4Enable.isChecked():
-		plt.plot(time, adc2mVChDMax[:], label='D')
+		plt.plot(time, adc2mVChDMax[:], label='ch D')
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
 
 	# plt.figure(num='PicoScope 5000a digital ports')
-	plt.subplot(3,1,3)
-	plt.title('Plot of Digital Port 0 digital channels vs. time')
+	
+	# plt.title('Plot of Digital Port 0 digital channels vs. time')
 	# plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
 	# plt.plot(time, bufferDPort0[1], label='D6')
 	# plt.plot(time, bufferDPort0[2], label='D5')
+	plt.subplot(3,1,3)
 	plt.plot(time, bufferDPort0[3], label='D4')
 	# plt.plot(time, bufferDPort0[4], label='D3')
 	# plt.plot(time, bufferDPort0[5], label='D2')
