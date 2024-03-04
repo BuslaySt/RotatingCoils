@@ -182,7 +182,7 @@ def setup_analogue_channels() -> None:
 		case "20 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
 		case "50 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_50V"]
 	# analogue offset = 0 V
-	harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, e, coupling_type, harm.chRange["A"], 0)
+	harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, enabledA, coupling_type, harm.chRange["A"], 0)
 	assert_pico_ok(harm.status["setChA"])
 	
 	# Настройка канала B
