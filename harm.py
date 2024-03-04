@@ -185,7 +185,7 @@ def setup_analogue_channels() -> None:
 		harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["A"], 0)
 		assert_pico_ok(harm.status["setChA"])
 	
-	if harm.ui.Channel2Enable.isChecked():
+	if not harm.ui.Channel2Enable.isChecked():
 		# Настройка канала B
 		# handle = harm.chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
@@ -205,7 +205,7 @@ def setup_analogue_channels() -> None:
 			case "20 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_20V"]
 			case "50 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_50V"]
 		# analogue offset = 0 V
-		harm.status["setChB"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["B"], 0)
+		harm.status["setChB"] = ps.ps5000aSetChannel(harm.chandle, channel, 0, coupling_type, harm.chRange["B"], 0)
 		assert_pico_ok(harm.status["setChB"])
 
 	if harm.ui.Channel3Enable.isChecked():
@@ -231,7 +231,7 @@ def setup_analogue_channels() -> None:
 		harm.status["setChC"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["C"], 0)
 		assert_pico_ok(harm.status["setChC"])
 
-	if harm.ui.Channel4Enable.isChecked():
+	if not harm.ui.Channel4Enable.isChecked():
 		# Настройка канала D
 		# handle = harm.chandle
 		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
@@ -251,7 +251,7 @@ def setup_analogue_channels() -> None:
 			case "20 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_20V"]
 			case "50 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_50V"]
 		# analogue offset = 0 V
-		harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["D"], 0)
+		harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, 0, coupling_type, harm.chRange["D"], 0)
 		assert_pico_ok(harm.status["setChD"])
 
 def setup_digital_channels() -> None:
