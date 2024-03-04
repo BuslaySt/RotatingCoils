@@ -162,97 +162,98 @@ def setup_analogue_channels() -> None:
 	harm.chRange = {}
 	coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]	
 
-	if harm.ui.Channel1Enable.isChecked():
-		# Настройка канала A
-		# handle = harm.chandle
-		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
-		# enabled = 1
-		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		match harm.ui.Channel1Range.currentText():
-			case "10 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_10MV"]
-			case "20 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20MV"]
-			case "50 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_50MV"]
-			case "100 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_100MV"]
-			case "200 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_200MV"]
-			case "500 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_500MV"]
-			case "1 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_1V"]
-			case "2 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_2V"]
-			case "5 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_5V"]
-			case "10 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_10V"]
-			case "20 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
-			case "50 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_50V"]
-		# analogue offset = 0 V
-		harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["A"], 0)
-		assert_pico_ok(harm.status["setChA"])
+	# Настройка канала A
+	# handle = harm.chandle
+	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
+	# enabled = 1
+	enabledA = 1 if harm.ui.Channel1Enable.isChecked() else 0
+	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+	match harm.ui.Channel1Range.currentText():
+		case "10 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_10MV"]
+		case "20 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20MV"]
+		case "50 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_50MV"]
+		case "100 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_100MV"]
+		case "200 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_200MV"]
+		case "500 mV": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_500MV"]
+		case "1 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_1V"]
+		case "2 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		case "5 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_5V"]
+		case "10 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_10V"]
+		case "20 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_20V"]
+		case "50 V": 	harm.chRange["A"] = ps.PS5000A_RANGE["PS5000A_50V"]
+	# analogue offset = 0 V
+	harm.status["setChA"] = ps.ps5000aSetChannel(harm.chandle, channel, e, coupling_type, harm.chRange["A"], 0)
+	assert_pico_ok(harm.status["setChA"])
 	
-	if not harm.ui.Channel2Enable.isChecked():
-		# Настройка канала B
-		# handle = harm.chandle
-		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
-		# enabled = 1
-		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		match harm.ui.Channel2Range.currentText():
-			case "10 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_10MV"]
-			case "20 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_20MV"]
-			case "50 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_50MV"]
-			case "100 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_100MV"]
-			case "200 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_200MV"]
-			case "500 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_500MV"]
-			case "1 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_1V"]
-			case "2 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
-			case "5 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_5V"]
-			case "10 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_10V"]
-			case "20 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_20V"]
-			case "50 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_50V"]
-		# analogue offset = 0 V
-		harm.status["setChB"] = ps.ps5000aSetChannel(harm.chandle, channel, 0, coupling_type, harm.chRange["B"], 0)
-		assert_pico_ok(harm.status["setChB"])
+	# Настройка канала B
+	# handle = harm.chandle
+	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
+	# enabled = 1
+	enabledB = 1 if harm.ui.Channel2Enable.isChecked() else 0
+	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+	match harm.ui.Channel2Range.currentText():
+		case "10 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_10MV"]
+		case "20 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_20MV"]
+		case "50 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_50MV"]
+		case "100 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_100MV"]
+		case "200 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_200MV"]
+		case "500 mV": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_500MV"]
+		case "1 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_1V"]
+		case "2 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		case "5 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_5V"]
+		case "10 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_10V"]
+		case "20 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_20V"]
+		case "50 V": 	harm.chRange["B"] = ps.PS5000A_RANGE["PS5000A_50V"]
+	# analogue offset = 0 V
+	harm.status["setChB"] = ps.ps5000aSetChannel(harm.chandle, channel, enabledB, coupling_type, harm.chRange["B"], 0)
+	assert_pico_ok(harm.status["setChB"])
 
-	if harm.ui.Channel3Enable.isChecked():
-		# Настройка канала C
-		# handle = harm.chandle
-		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
-		# enabled = 1
-		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		match harm.ui.Channel3Range.currentText():
-			case "10 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_10MV"]
-			case "20 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_20MV"]
-			case "50 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_50MV"]
-			case "100 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_100MV"]
-			case "200 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_200MV"]
-			case "500 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_500MV"]
-			case "1 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_1V"]
-			case "2 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
-			case "5 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_5V"]
-			case "10 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_10V"]
-			case "20 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_20V"]
-			case "50 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_50V"]
-		# analogue offset = 0 V
-		harm.status["setChC"] = ps.ps5000aSetChannel(harm.chandle, channel, 1, coupling_type, harm.chRange["C"], 0)
-		assert_pico_ok(harm.status["setChC"])
+	
+	# Настройка канала C
+	# handle = harm.chandle
+	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+	# enabled = 1
+	enabledC = 1 if harm.ui.Channel3Enable.isChecked() else 0
+	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+	match harm.ui.Channel3Range.currentText():
+		case "10 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_10MV"]
+		case "20 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_20MV"]
+		case "50 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_50MV"]
+		case "100 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_100MV"]
+		case "200 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_200MV"]
+		case "500 mV": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_500MV"]
+		case "1 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_1V"]
+		case "2 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		case "5 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_5V"]
+		case "10 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_10V"]
+		case "20 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_20V"]
+		case "50 V": 	harm.chRange["C"] = ps.PS5000A_RANGE["PS5000A_50V"]
+	# analogue offset = 0 V
+	harm.status["setChC"] = ps.ps5000aSetChannel(harm.chandle, channel, enabledC, coupling_type, harm.chRange["C"], 0)
+	assert_pico_ok(harm.status["setChC"])
 
-	if not harm.ui.Channel4Enable.isChecked():
-		# Настройка канала D
-		# handle = harm.chandle
-		channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
-		# enabled = 1
-		# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-		match harm.ui.Channel4Range.currentText():
-			case "10 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_10MV"]
-			case "20 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_20MV"]
-			case "50 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_50MV"]
-			case "100 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_100MV"]
-			case "200 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_200MV"]
-			case "500 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_500MV"]
-			case "1 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_1V"]
-			case "2 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
-			case "5 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_5V"]
-			case "10 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_10V"]
-			case "20 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_20V"]
-			case "50 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_50V"]
-		# analogue offset = 0 V
-		harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, 0, coupling_type, harm.chRange["D"], 0)
-		assert_pico_ok(harm.status["setChD"])
+	# Настройка канала D
+	# handle = harm.chandle
+	channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
+	# enabled = 1
+	enabledD = 1 if harm.ui.Channel4Enable.isChecked() else 0
+	# coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+	match harm.ui.Channel4Range.currentText():
+		case "10 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_10MV"]
+		case "20 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_20MV"]
+		case "50 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_50MV"]
+		case "100 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_100MV"]
+		case "200 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_200MV"]
+		case "500 mV": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_500MV"]
+		case "1 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_1V"]
+		case "2 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_2V"]
+		case "5 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_5V"]
+		case "10 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_10V"]
+		case "20 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_20V"]
+		case "50 V": 	harm.chRange["D"] = ps.PS5000A_RANGE["PS5000A_50V"]
+	# analogue offset = 0 V
+	harm.status["setChD"] = ps.ps5000aSetChannel(harm.chandle, channel, enabledD, coupling_type, harm.chRange["D"], 0)
+	assert_pico_ok(harm.status["setChD"])
 
 def setup_digital_channels() -> None:
 	''' -- Настройка цифровых каналов --'''
