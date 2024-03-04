@@ -290,7 +290,7 @@ def start_record_data() -> None:
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
-	timebase = 80000
+	timebase = 100000 # 100000 == 4 sec
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
