@@ -510,9 +510,11 @@ class window(QtWidgets.QMainWindow):
 		# Init Pico parameters
 		self.ui.Resolution.addItems(self.resolutions)
 		self.ui.Channel1Range.addItems(self.ranges)
-
+		self.ui.Channel1Range.setCurrentText('200 mV')
+		self.ui.Channel1Range.addItems(self.ranges)
 		self.ui.Channel2Range.addItems(self.ranges)
 		self.ui.Channel3Range.addItems(self.ranges)
+		self.ui.Channel3Range.setCurrentText('1 V')
 		self.ui.Channel4Range.addItems(self.ranges)
 		self.ui.Interval.addItems(self.intervals_14bit_15bit)
 		self.ui.SampleRate.setText(self.sampleRates_14bit_15bit[0])
