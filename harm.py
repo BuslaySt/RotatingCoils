@@ -281,7 +281,7 @@ def start_record_data() -> None:
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
-	timebase = 100000 # 100000 == 4-8 sec
+	timebase = 200000 # 100000 == 4-8 sec
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
@@ -386,13 +386,16 @@ def start_record_data() -> None:
 	# Obtain binary for Digital Port 0
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
 	bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
-	harm.data['D0'] = bufferDPort0[0]
+	harm.data['D0'] = bufferDPort0[7]
+	ic(bufferDPort0[3])
 	harm.data['D4'] = bufferDPort0[3]
 	
 	df = pd.DataFrame(harm.data)
-	ic(df.head())
-	ic(df.tail())
-	
+	print(df[df["D4"]!="b'0'"])
+	df['D0'] = df['D0'].apply(int)
+	df['D4'] = df['D4'].apply(int)
+	ic(df.describe())
+
 	# plot data from analogue and digital channels 
 	plt.figure(num='PicoScope 5000a ports')
 
@@ -426,7 +429,7 @@ def start_record_data() -> None:
 	# plt.plot(time_axis, bufferDPort0[4], label='D3')
 	# plt.plot(time_axis, bufferDPort0[5], label='D2')
 	# plt.plot(time_axis, bufferDPort0[6], label='D1')
-	# plt.plot(time_axis, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
+	plt.plot(time_axis, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Logic Level')
 	plt.legend(loc="upper right")
