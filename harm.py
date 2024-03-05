@@ -1,19 +1,12 @@
 from icecream import ic # Для дебага
 
-from PyQt5 import QtWidgets  # , QtGui, QtCore
-#from PyQt5.QtCore import QThread, QObject
-# from PyQt5.QtGui import *
-# from PyQt5.QtWidgets import *
-# from PyQt5.QtCore import *
-# from PyQt5 import uic
-# from PyQt5.QtWidgets import QMainWindow
+from PyQt5 import QtWidgets
+from harmonic import Ui_MainWindow  #модуль дизайна
 
 import sys
-import time
+# import time
 import pandas as pd
 import numpy as np
-
-from harmonic import Ui_MainWindow  #модуль дизайна
 
 # Подключение необходимых модулей для вращения мотора
 import serial
@@ -117,7 +110,7 @@ def updateInterval() -> None:
 		ic(harm.resolution, harm.interval)
 
 def resolutionUpdate() -> None:
-	global channels
+	''' Выбор битности разрешенияв зависимости от количества используемых каналов '''
 	harm.channels[0] = harm.ui.Channel1Enable.checkState()
 	harm.channels[1] = harm.ui.Channel2Enable.checkState()
 	harm.channels[2] = harm.ui.Channel3Enable.checkState()
@@ -130,7 +123,7 @@ def resolutionUpdate() -> None:
 		harm.ui.Resolution.addItems(['14', '15'])
 	if harm.channels.count(2) == 1:
 		harm.ui.Resolution.clear()
-		harm.ui.Resolution.addItems(['14', '15', '16 '])
+		harm.ui.Resolution.addItems(['14', '15', '16'])
 
 def calcTimeBase() -> None:
 	if harm.resolution in [14, 15]:
@@ -280,10 +273,7 @@ def start_record_data() -> None:
 	# Получение максимального количества сэмплов АЦП
 	maxADC = ctypes.c_int16()
 	harm.status["maximumValue"] = ps.ps5000aMaximumValue(harm.chandle, ctypes.byref(maxADC))
-	ic(harm.status["maximumValue"])
 	assert_pico_ok(harm.status["maximumValue"])
-
-	ic(harm.status)
 
 	# Установка количества сэмплов до и после срабатывания триггера
 	preTriggerSamples = 2500
@@ -291,11 +281,14 @@ def start_record_data() -> None:
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
-	timebase = 100000 # 100000 == 4 sec
+	timebase = 100000 # 100000 == 4-8 sec
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
 	assert_pico_ok(harm.status["getTimebase2"])
+
+	ic(harm.chandle)
+	ic(harm.status)
 	
 	# Запуск сбора данных
 	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, preTriggerSamples, postTriggerSamples, timebase, None, 0, None, None)
@@ -373,8 +366,8 @@ def start_record_data() -> None:
 	print("Data collection complete.")
 
 	# Create time data
-	time = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
-	harm.data['timestamp'] = time
+	time_axis = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
+	harm.data['timestamp'] = time_axis
 
 	# Преобразование отсчетов АЦП в мВ
 	if harm.ui.Channel1Enable.isChecked():
@@ -406,18 +399,18 @@ def start_record_data() -> None:
 	plt.subplot(3,1,1)
 	plt.title("Plot of ports' data vs. time")
 	if harm.ui.Channel1Enable.isChecked():
-		plt.plot(time, adc2mVChAMax, label='ch A')
+		plt.plot(time_axis, adc2mVChAMax, label='ch A')
 	if harm.ui.Channel2Enable.isChecked():
-		plt.plot(time, adc2mVChBMax[:], label='ch B')
+		plt.plot(time_axis, adc2mVChBMax[:], label='ch B')
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
 
 	plt.subplot(3,1,2)
 	if harm.ui.Channel3Enable.isChecked():
-		plt.plot(time, adc2mVChCMax[:], label='ch C')
+		plt.plot(time_axis, adc2mVChCMax[:], label='ch C')
 	if harm.ui.Channel4Enable.isChecked():
-		plt.plot(time, adc2mVChDMax[:], label='ch D')
+		plt.plot(time_axis, adc2mVChDMax[:], label='ch D')
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
@@ -425,15 +418,15 @@ def start_record_data() -> None:
 	# plt.figure(num='PicoScope 5000a digital ports')
 	
 	# plt.title('Plot of Digital Port 0 digital channels vs. time')
-	# plt.plot(time, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
-	# plt.plot(time, bufferDPort0[1], label='D6')
-	# plt.plot(time, bufferDPort0[2], label='D5')
+	# plt.plot(time_axis, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
+	# plt.plot(time_axis, bufferDPort0[1], label='D6')
+	# plt.plot(time_axis, bufferDPort0[2], label='D5')
 	plt.subplot(3,1,3)
-	plt.plot(time, bufferDPort0[3], label='D4')
-	# plt.plot(time, bufferDPort0[4], label='D3')
-	# plt.plot(time, bufferDPort0[5], label='D2')
-	# plt.plot(time, bufferDPort0[6], label='D1')
-	# plt.plot(time, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
+	plt.plot(time_axis, bufferDPort0[3], label='D4')
+	# plt.plot(time_axis, bufferDPort0[4], label='D3')
+	# plt.plot(time_axis, bufferDPort0[5], label='D2')
+	# plt.plot(time_axis, bufferDPort0[6], label='D1')
+	# plt.plot(time_axis, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Logic Level')
 	plt.legend(loc="upper right")
@@ -537,6 +530,7 @@ class window(QtWidgets.QMainWindow):
 if __name__ == "__main__":
 	app = QtWidgets.QApplication([])
 	harm = window()
+	resolutionUpdate()
 	harm.show()
-
+	
 	sys.exit(app.exec_())
