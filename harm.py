@@ -19,33 +19,6 @@ import matplotlib.pyplot as plt
 from picosdk.ps5000a import ps5000a as ps
 from picosdk.functions import adc2mV, assert_pico_ok, mV2adc, splitMSODataFast
 
-# ---------- General ----------
-# global rotatingTime
-# rotatingTime = 0
-
-# ---------- Motor variables ----------
-# global motorSpeed, motorAcc, motorDec, motorState, motorTurns, harm.servo
-# motorSpeed = 60 # rpm
-# motorAcc = 20
-# motorDec = 20
-# motorState = 0
-# motorTurns = 10
-
-# ---------- Picoscope 5442D ----------
-# global sampleRates, timeBase, interval, channels, intervals, resolution
-# resolutions = ["14", "15", "16"]
-# resolution = 14
-# ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V", "50 V"]
-# channels = [0, 0, 0, 0]
-# intervals_14bit_15bit = ["104", "200", "504", "1000", "2000"]
-# intervals_16bit = ["112", "208", "512", "1008", "2000"]
-# sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
-# sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
-
-# Создание объектов chandle, status
-# chandle = ctypes.c_int16()
-# status = {}
-
 # ---------- Functions ----------
 def rotate() -> None:
 	''' -- Coil continious rotation --'''
@@ -109,7 +82,7 @@ def updateInterval() -> None:
 		harm.interval = int(harm.ui.Interval.currentText())
 
 def resolutionUpdate() -> None:
-	''' Выбор битности разрешенияв зависимости от количества используемых каналов '''
+	''' Выбор битности разрешения в зависимости от количества используемых каналов '''
 	harm.channels[0] = harm.ui.Channel1Enable.checkState()
 	harm.channels[1] = harm.ui.Channel2Enable.checkState()
 	harm.channels[2] = harm.ui.Channel3Enable.checkState()
@@ -120,9 +93,11 @@ def resolutionUpdate() -> None:
 	if harm.channels.count(2) == 2:
 		harm.ui.Resolution.clear()
 		harm.ui.Resolution.addItems(['14', '15'])
+		harm.ui.Resolution.setCurrentText('15')
 	if harm.channels.count(2) == 1:
 		harm.ui.Resolution.clear()
 		harm.ui.Resolution.addItems(['14', '15', '16'])
+	harm.ui.Resolution.setCurrentText('16')
 
 def calcTimeBase() -> None:
 	if harm.resolution in [14, 15]:
@@ -258,8 +233,28 @@ def setup_digital_channels() -> None:
 	harm.status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(harm.chandle, digital_port0, 1, 10000)
 	assert_pico_ok(harm.status["SetDigitalPort"])
 
+def get_max_ADC_samples() -> None:
+	''' Получение максимального количества сэмплов АЦП '''
+	harm.maxADC = ctypes.c_int16()
+	harm.status["maximumValue"] = ps.ps5000aMaximumValue(harm.chandle, ctypes.byref(harm.maxADC))
+	assert_pico_ok(harm.status["maximumValue"])
+
+def set_max_samples() -> None:
+	''' Установка количества сэмплов до и после срабатывания триггера '''
+	harm.preTriggerSamples = 5000
+	harm.postTriggerSamples = 5000
+	harm.maxSamples = harm.preTriggerSamples + harm.postTriggerSamples
+
+def set_timebase() -> None:
+	# Установка частоты сэмплирования
+	harm.timebase = 100000 # 100000 == 4-8 sec
+	timeIntervalns = ctypes.c_float()
+	returnedMaxSamples = ctypes.c_int32()
+	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
+	assert_pico_ok(harm.status["getTimebase2"])
+
 def set_digital_trigger():
-	# set the digital trigger for a high bit on digital channel 0
+	# set the digital trigger for a high bit on digital channel 4
 	conditions = ps.PS5000A_CONDITION(ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"], ps.PS5000A_TRIGGER_STATE["PS5000A_CONDITION_TRUE"])
 	nConditions = 1
 	clear = 1
@@ -271,7 +266,7 @@ def set_digital_trigger():
 																					info)
 	assert_pico_ok(harm.status["setTriggerChannelConditionsV2"])
 
-	directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_0"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
+	directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_4"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
 	nDirections = 1
 	harm.status["setTriggerDigitalPortProperties"] = ps.ps5000aSetTriggerDigitalPortProperties(harm.chandle,
 																						ctypes.byref(directions),
@@ -292,25 +287,12 @@ def start_record_data() -> None:
 	setup_analogue_channels()
 	setup_digital_channels()
 
-	# Получение максимального количества сэмплов АЦП
-	maxADC = ctypes.c_int16()
-	harm.status["maximumValue"] = ps.ps5000aMaximumValue(harm.chandle, ctypes.byref(maxADC))
-	assert_pico_ok(harm.status["maximumValue"])
-
-	# Установка количества сэмплов до и после срабатывания триггера
-	preTriggerSamples = 5000
-	postTriggerSamples = 5000
-	maxSamples = preTriggerSamples + postTriggerSamples
-	
-	# Установка частоты сэмплирования
-	timebase = 100000 # 100000 == 4-8 sec
-	timeIntervalns = ctypes.c_float()
-	returnedMaxSamples = ctypes.c_int32()
-	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
-	assert_pico_ok(harm.status["getTimebase2"])
+	get_max_ADC_samples()
+	set_max_samples()
+	set_timebase()
 
 	# Запуск сбора данных
-	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, preTriggerSamples, postTriggerSamples, timebase, None, 0, None, None)
+	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, harm.preTriggerSamples, harm.postTriggerSamples, harm.timebase, None, 0, None, None)
 	assert_pico_ok(harm.status["runBlock"])
 	
 	# Ожидание готовности данных
@@ -320,41 +302,41 @@ def start_record_data() -> None:
 		harm.status["isReady"] = ps.ps5000aIsReady(harm.chandle, ctypes.byref(ready))
 	
 	# Создание буферов данных
-	bufferAMax = (ctypes.c_int16 * maxSamples)()
-	bufferAMin = (ctypes.c_int16 * maxSamples)()
-	bufferBMax = (ctypes.c_int16 * maxSamples)()
-	bufferBMin = (ctypes.c_int16 * maxSamples)()
-	bufferCMax = (ctypes.c_int16 * maxSamples)()
-	bufferCMin = (ctypes.c_int16 * maxSamples)()
-	bufferDMax = (ctypes.c_int16 * maxSamples)()
-	bufferDMin = (ctypes.c_int16 * maxSamples)()
+	bufferAMax = (ctypes.c_int16 * harm.maxSamples)()
+	bufferAMin = (ctypes.c_int16 * harm.maxSamples)()
+	bufferBMax = (ctypes.c_int16 * harm.maxSamples)()
+	bufferBMin = (ctypes.c_int16 * harm.maxSamples)()
+	bufferCMax = (ctypes.c_int16 * harm.maxSamples)()
+	bufferCMin = (ctypes.c_int16 * harm.maxSamples)()
+	bufferDMax = (ctypes.c_int16 * harm.maxSamples)()
+	bufferDMin = (ctypes.c_int16 * harm.maxSamples)()
 
 	# Create buffers ready for assigning pointers for data collection
-	bufferDPort0Max = (ctypes.c_int16 * maxSamples)()
-	bufferDPort0Min = (ctypes.c_int16 * maxSamples)()
+	bufferDPort0Max = (ctypes.c_int16 * harm.maxSamples)()
+	bufferDPort0Min = (ctypes.c_int16 * harm.maxSamples)()
 	
 	if harm.ui.Channel1Enable.isChecked():
 		# Указание буфера для сбора данных канала А
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
-		harm.status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), maxSamples, 0, 0)
+		harm.status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), harm.maxSamples, 0, 0)
 		assert_pico_ok(harm.status["setDataBuffersA"])
 	
 	if harm.ui.Channel2Enable.isChecked():
 		# Указание буфера для сбора данных канала B
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
-		harm.status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), maxSamples, 0, 0)
+		harm.status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), harm.maxSamples, 0, 0)
 		assert_pico_ok(harm.status["setDataBuffersB"])
 
 	if harm.ui.Channel3Enable.isChecked():
 		# Указание буфера для сбора данных канала C
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
-		harm.status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), maxSamples, 0, 0)
+		harm.status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), harm.maxSamples, 0, 0)
 		assert_pico_ok(harm.status["setDataBuffersC"])
 
 	if harm.ui.Channel4Enable.isChecked():
 		# Указание буфера для сбора данных канала D
 		source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
-		harm.status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), maxSamples, 0, 0)
+		harm.status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(harm.chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), harm.maxSamples, 0, 0)
 		assert_pico_ok(harm.status["setDataBuffersD"])
 
 	# Указание буфера для сбора данных цифрового канала ps5000a_DIGITAL_PORT0
@@ -366,7 +348,7 @@ def start_record_data() -> None:
 	# Buffer length = totalSamples
 	# Segment index = 0
 	# Ratio mode = ps5000a_RATIO_MODE_NONE = 0
-	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
+	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), harm.maxSamples, 0, 0)
 	assert_pico_ok(harm.status["SetDataBuffersDigital"])
 
 	set_digital_trigger()
@@ -377,7 +359,7 @@ def start_record_data() -> None:
 	overflow = ctypes.c_int16()
 	
 	# Приведение типов
-	cmaxSamples = ctypes.c_int32(maxSamples)
+	cmaxSamples = ctypes.c_int32(harm.maxSamples)
 	
 	# Получение данных из осциллографа в созданные буферы
 	harm.status["getValues"] = ps.ps5000aGetValues(harm.chandle, 0, ctypes.byref(cmaxSamples), 0, 0, 0, ctypes.byref(overflow))
@@ -391,16 +373,16 @@ def start_record_data() -> None:
 
 	# Преобразование отсчетов АЦП в мВ
 	if harm.ui.Channel1Enable.isChecked():
-		adc2mVChAMax = adc2mV(bufferAMax, harm.chRange["A"], maxADC)
+		adc2mVChAMax = adc2mV(bufferAMax, harm.chRange["A"], harm.maxADC)
 		harm.data['ch_a'] = adc2mVChAMax
 	if harm.ui.Channel2Enable.isChecked():
-		adc2mVChBMax = adc2mV(bufferBMax, harm.chRange["B"], maxADC)
+		adc2mVChBMax = adc2mV(bufferBMax, harm.chRange["B"], harm.maxADC)
 		harm.data['ch_b'] = adc2mVChBMax
 	if harm.ui.Channel3Enable.isChecked():
-		adc2mVChCMax = adc2mV(bufferCMax, harm.chRange["C"], maxADC)
+		adc2mVChCMax = adc2mV(bufferCMax, harm.chRange["C"], harm.maxADC)
 		harm.data['ch_c'] = adc2mVChCMax
 	if harm.ui.Channel4Enable.isChecked():
-		adc2mVChDMax = adc2mV(bufferDMax, harm.chRange["D"], maxADC)
+		adc2mVChDMax = adc2mV(bufferDMax, harm.chRange["D"], harm.maxADC)
 		harm.data['ch_d'] = adc2mVChDMax
 
 	# Obtain binary for Digital Port 0
