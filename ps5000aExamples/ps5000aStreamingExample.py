@@ -58,24 +58,24 @@ status["setChA"] = ps.ps5000aSetChannel(chandle,
                                         analogue_offset)
 assert_pico_ok(status["setChA"])
 
-# Set up channel B
+# Set up channel C
 # handle = chandle
 # channel = PS5000A_CHANNEL_B = 1
 # enabled = 1
 # coupling type = PS5000A_DC = 1
 # range = PS5000A_2V = 7
 # analogue offset = 0 V
-status["setChB"] = ps.ps5000aSetChannel(chandle,
-                                        ps.PS5000A_CHANNEL['PS5000A_CHANNEL_B'],
+status["setChC"] = ps.ps5000aSetChannel(chandle,
+                                        ps.PS5000A_CHANNEL['PS5000A_CHANNEL_C'],
                                         enabled,
                                         ps.PS5000A_COUPLING['PS5000A_DC'],
                                         channel_range,
                                         analogue_offset)
-assert_pico_ok(status["setChB"])
+assert_pico_ok(status["setChC"])
 
 # Size of capture
 sizeOfOneBuffer = 500
-numBuffersToCapture = 10
+numBuffersToCapture = 50
 
 totalSamples = sizeOfOneBuffer * numBuffersToCapture
 
@@ -110,14 +110,14 @@ assert_pico_ok(status["setDataBuffersA"])
 # buffer length = maxSamples
 # segment index = 0
 # ratio mode = PS5000A_RATIO_MODE_NONE = 0
-status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(chandle,
-                                                     ps.PS5000A_CHANNEL['PS5000A_CHANNEL_B'],
+status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(chandle,
+                                                     ps.PS5000A_CHANNEL['PS5000A_CHANNEL_C'],
                                                      bufferBMax.ctypes.data_as(ctypes.POINTER(ctypes.c_int16)),
                                                      None,
                                                      sizeOfOneBuffer,
                                                      memory_segment,
                                                      ps.PS5000A_RATIO_MODE['PS5000A_RATIO_MODE_NONE'])
-assert_pico_ok(status["setDataBuffersB"])
+assert_pico_ok(status["setDataBuffersC"])
 
 # Begin streaming mode:
 sampleInterval = ctypes.c_int32(250)
@@ -145,11 +145,10 @@ print("Capturing at sample interval %s ns" % actualSampleIntervalNs)
 
 # We need a big buffer, not registered with the driver, to keep our complete capture in.
 bufferCompleteA = np.zeros(shape=totalSamples, dtype=np.int16)
-bufferCompleteB = np.zeros(shape=totalSamples, dtype=np.int16)
+bufferCompleteC = np.zeros(shape=totalSamples, dtype=np.int16)
 nextSample = 0
 autoStopOuter = False
 wasCalledBack = False
-
 
 def streaming_callback(handle, noOfSamples, startIndex, overflow, triggerAt, triggered, autoStop, param):
     global nextSample, autoStopOuter, wasCalledBack
@@ -157,11 +156,10 @@ def streaming_callback(handle, noOfSamples, startIndex, overflow, triggerAt, tri
     destEnd = nextSample + noOfSamples
     sourceEnd = startIndex + noOfSamples
     bufferCompleteA[nextSample:destEnd] = bufferAMax[startIndex:sourceEnd]
-    bufferCompleteB[nextSample:destEnd] = bufferBMax[startIndex:sourceEnd]
+    bufferCompleteC[nextSample:destEnd] = bufferBMax[startIndex:sourceEnd]
     nextSample += noOfSamples
     if autoStop:
         autoStopOuter = True
-
 
 # Convert the python function into a C function pointer.
 cFuncPtr = ps.StreamingReadyType(streaming_callback)
@@ -186,14 +184,14 @@ assert_pico_ok(status["maximumValue"])
 
 # Convert ADC counts data to mV
 adc2mVChAMax = adc2mV(bufferCompleteA, channel_range, maxADC)
-adc2mVChBMax = adc2mV(bufferCompleteB, channel_range, maxADC)
+adc2mVChCMax = adc2mV(bufferCompleteC, channel_range, maxADC)
 
 # Create time data
 time = np.linspace(0, (totalSamples - 1) * actualSampleIntervalNs, totalSamples)
 
 # Plot data from channel A and B
 plt.plot(time, adc2mVChAMax[:])
-plt.plot(time, adc2mVChBMax[:])
+plt.plot(time, adc2mVChCMax[:])
 plt.xlabel('Time (ns)')
 plt.ylabel('Voltage (mV)')
 plt.show()
