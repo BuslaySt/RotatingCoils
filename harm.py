@@ -248,9 +248,9 @@ def set_max_samples() -> None:
 def set_timebase() -> None:
 	# Установка частоты сэмплирования
 	harm.timebase = 100000 # 100000 == 4-8 sec
-	timeIntervalns = ctypes.c_float()
+	harm.timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
-	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
+	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(harm.timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
 	assert_pico_ok(harm.status["getTimebase2"])
 
 def set_digital_trigger():
@@ -368,7 +368,7 @@ def start_record_data() -> None:
 	print("Data collection complete.")
 
 	# Create time data
-	time_axis = np.linspace(0, (cmaxSamples.value - 1) * timeIntervalns.value, cmaxSamples.value)
+	time_axis = np.linspace(0, (cmaxSamples.value - 1) * harm.timeIntervalns.value, cmaxSamples.value)
 	harm.data['timestamp'] = time_axis
 
 	# Преобразование отсчетов АЦП в мВ
