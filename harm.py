@@ -107,7 +107,6 @@ def updateInterval() -> None:
 			harm.ui.Interval.clear()
 			harm.ui.Interval.addItems(harm.intervals_16bit)
 		harm.interval = int(harm.ui.Interval.currentText())
-		ic(harm.resolution, harm.interval)
 
 def resolutionUpdate() -> None:
 	''' Выбор битности разрешенияв зависимости от количества используемых каналов '''
@@ -251,7 +250,6 @@ def setup_analogue_channels() -> None:
 def setup_digital_channels() -> None:
 	''' -- Настройка цифровых каналов --'''
 	digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
-	ic(digital_port0)
 	# Set up digital port
 	# handle = harm.chandle
 	# channel = ps5000a_DIGITAL_PORT0 = 0x80
@@ -276,20 +274,17 @@ def start_record_data() -> None:
 	assert_pico_ok(harm.status["maximumValue"])
 
 	# Установка количества сэмплов до и после срабатывания триггера
-	preTriggerSamples = 2500
-	postTriggerSamples = 2500
+	preTriggerSamples = 50000
+	postTriggerSamples = 50000
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
-	timebase = 200000 # 100000 == 4-8 sec
+	timebase = 10000 # 100000 == 4-8 sec
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
 	assert_pico_ok(harm.status["getTimebase2"])
 
-	ic(harm.chandle)
-	ic(harm.status)
-	
 	# Запуск сбора данных
 	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, preTriggerSamples, postTriggerSamples, timebase, None, 0, None, None)
 	assert_pico_ok(harm.status["runBlock"])
@@ -342,7 +337,6 @@ def start_record_data() -> None:
 	# handle = harm.chandle
 	# source = ps.ps5000a_DIGITAL_PORT0    # == 0x80
 	digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
-	ic(digital_port0)
 	# Buffer max = ctypes.byref(bufferDPort0Max)
 	# Buffer min = ctypes.byref(bufferDPort0Min)
 	# Buffer length = totalSamples
@@ -387,14 +381,14 @@ def start_record_data() -> None:
 	# The tuple returned contains the channels in order (D7, D6, D5, ... D0).
 	bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
 	harm.data['D0'] = bufferDPort0[7]
-	ic(bufferDPort0[3])
 	harm.data['D4'] = bufferDPort0[3]
 	
 	df = pd.DataFrame(harm.data)
 	print(df[df["D4"]!="b'0'"])
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
-	ic(df.describe())
+	ic(df["D4"].value_counts())
+	# ic(df.describe())
 
 	# plot data from analogue and digital channels 
 	plt.figure(num='PicoScope 5000a ports')
@@ -429,7 +423,7 @@ def start_record_data() -> None:
 	# plt.plot(time_axis, bufferDPort0[4], label='D3')
 	# plt.plot(time_axis, bufferDPort0[5], label='D2')
 	# plt.plot(time_axis, bufferDPort0[6], label='D1')
-	plt.plot(time_axis, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
+	# plt.plot(time_axis, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Logic Level')
 	plt.legend(loc="upper right")
