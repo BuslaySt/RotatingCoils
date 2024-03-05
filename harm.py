@@ -265,22 +265,22 @@ def set_digital_trigger():
 	clear = 1
 	add = 2
 	info = clear + add
-	harm.status["setTriggerChannelConditionsV2"] = ps.ps5000aSetTriggerChannelConditionsV2(chandle,
+	harm.status["setTriggerChannelConditionsV2"] = ps.ps5000aSetTriggerChannelConditionsV2(harm.chandle,
 																					ctypes.byref(conditions),
 																					nConditions,
 																					info)
-	assert_pico_ok(status["setTriggerChannelConditionsV2"])
+	assert_pico_ok(harm.status["setTriggerChannelConditionsV2"])
 
 	directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_0"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
 	nDirections = 1
-	harm.status["setTriggerDigitalPortProperties"] = ps.ps5000aSetTriggerDigitalPortProperties(chandle,
+	harm.status["setTriggerDigitalPortProperties"] = ps.ps5000aSetTriggerDigitalPortProperties(harm.chandle,
 																						ctypes.byref(directions),
 																						nDirections)
-	assert_pico_ok(status["setTriggerDigitalPortProperties"])
+	assert_pico_ok(harm.status["setTriggerDigitalPortProperties"])
 
 	# set autotrigger timeout value
-	harm.status["autoTriggerus"] = ps.ps5000aSetAutoTriggerMicroSeconds(chandle, 10000)
-	assert_pico_ok(status["autoTriggerus"])
+	harm.status["autoTriggerus"] = ps.ps5000aSetAutoTriggerMicroSeconds(harm.chandle, 10000)
+	assert_pico_ok(harm.status["autoTriggerus"])
 
 def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
@@ -298,12 +298,12 @@ def start_record_data() -> None:
 	assert_pico_ok(harm.status["maximumValue"])
 
 	# Установка количества сэмплов до и после срабатывания триггера
-	preTriggerSamples = 2500
-	postTriggerSamples = 2500
+	preTriggerSamples = 5000
+	postTriggerSamples = 5000
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
-	timebase = 10000 # 100000 == 4-8 sec
+	timebase = 100000 # 100000 == 4-8 sec
 	timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, timebase, maxSamples, ctypes.byref(timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
