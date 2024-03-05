@@ -260,6 +260,30 @@ def setup_digital_channels() -> None:
 	harm.status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(harm.chandle, digital_port0, 1, 10000)
 	assert_pico_ok(harm.status["SetDigitalPort"])
 
+def set_digital_trigger():
+	# set the digital trigger for a high bit on digital channel 0
+	conditions = ps.PS5000A_CONDITION(ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"], ps.PS5000A_TRIGGER_STATE["PS5000A_CONDITION_TRUE"])
+	nConditions = 1
+	clear = 1
+	add = 2
+	info = clear + add
+	harm.status["setTriggerChannelConditionsV2"] = ps.ps5000aSetTriggerChannelConditionsV2(chandle,
+																					ctypes.byref(conditions),
+																					nConditions,
+																					info)
+	assert_pico_ok(status["setTriggerChannelConditionsV2"])
+
+	directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_0"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
+	nDirections = 1
+	harm.status["setTriggerDigitalPortProperties"] = ps.ps5000aSetTriggerDigitalPortProperties(chandle,
+																						ctypes.byref(directions),
+																						nDirections)
+	assert_pico_ok(status["setTriggerDigitalPortProperties"])
+
+	# set autotrigger timeout value
+	harm.status["autoTriggerus"] = ps.ps5000aSetAutoTriggerMicroSeconds(chandle, 10000)
+	assert_pico_ok(status["autoTriggerus"])
+
 def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
 	# Подключение к осциллографу
@@ -350,6 +374,8 @@ def start_record_data() -> None:
 	# Ratio mode = ps5000a_RATIO_MODE_NONE = 0
 	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), maxSamples, 0, 0)
 	assert_pico_ok(harm.status["SetDataBuffersDigital"])
+
+	set_digital_trigger()
 
 	print("Starting data collection...")
 
