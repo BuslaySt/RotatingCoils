@@ -274,8 +274,8 @@ def start_record_data() -> None:
 	assert_pico_ok(harm.status["maximumValue"])
 
 	# Установка количества сэмплов до и после срабатывания триггера
-	preTriggerSamples = 50000
-	postTriggerSamples = 50000
+	preTriggerSamples = 2500
+	postTriggerSamples = 2500
 	maxSamples = preTriggerSamples + postTriggerSamples
 	
 	# Установка частоты сэмплирования
