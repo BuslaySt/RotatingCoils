@@ -76,10 +76,12 @@ def updateInterval() -> None:
 		if harm.resolution in [14, 15]:
 			harm.ui.Interval.clear()
 			harm.ui.Interval.addItems(harm.intervals_14bit_15bit)
+			harm.ui.Interval.setCurrentText('504')
 		elif harm.resolution == 16:
 			harm.ui.Interval.clear()
 			harm.ui.Interval.addItems(harm.intervals_16bit)
-		harm.interval = int(harm.ui.Interval.currentText())
+			harm.ui.Interval.setCurrentText('512')
+		harm.interval = harm.ui.Interval.currentText()
 
 def resolutionUpdate() -> None:
 	''' Выбор битности разрешения в зависимости от количества используемых каналов '''
@@ -104,6 +106,7 @@ def calcTimeBase() -> None:
 		harm.ui.SampleRate.setText(harm.sampleRates_14bit_15bit[harm.ui.Interval.currentIndex()])
 	elif harm.resolution == 16:
 		harm.ui.SampleRate.setText(harm.sampleRates_16bit[harm.ui.Interval.currentIndex()])
+	harm.interval = harm.ui.Interval.currentText()
 
 def open_scope_unit():
 	match harm.resolution:
@@ -247,7 +250,12 @@ def set_max_samples() -> None:
 
 def set_timebase() -> None:
 	# Установка частоты сэмплирования
-	harm.timebase = 64 # 64 == 500 нс
+	if harm.resolution in [14, 15]:
+		harm.timebase = harm.intervals_14bit_15bit[harm.interval] # 65 == 504 нс
+		ic(harm.intervals_14bit_15bit[harm.interval])
+	elif harm.resolution == 16:
+		harm.timebase = harm.intervals_16bit[harm.interval] # 25 == 512 нс
+		ic(harm.intervals_14bit_15bit[harm.interval])
 	harm.timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(harm.timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
@@ -477,13 +485,13 @@ class window(QtWidgets.QMainWindow):
 		self.resolution = 14
 		self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V"]  #, "50 V"] 50V не работает
 		self.channels = [0, 0, 0, 0]
-		self.intervals_14bit_15bit = ["104", "200", "504", "1000", "2000"]
-		self.intervals_16bit = ["112", "208", "512", "1008", "2000"]
+		self.intervals_14bit_15bit = {"104": 15, "200": 27, "504": 65, "1000": 127, "2000": 252}
+		self.intervals_16bit = {"112": 10, "208": 16, "512": 35, "1008": 66, "2000": 128}
 		self.sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
 		self.sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
 
 		# ---------- Motor variables ----------
-		self.motorSpeed = 60 # rpm
+		self.motorSpeed = 120 # rpm
 		self.motorAcc = 20
 		self.motorDec = 20
 		self.motorState = 0
@@ -515,7 +523,7 @@ class window(QtWidgets.QMainWindow):
 		self.ui.Channel3Range.addItems(self.ranges)
 		self.ui.Channel3Range.setCurrentText('1 V')
 		self.ui.Channel4Range.addItems(self.ranges)
-		self.ui.Interval.addItems(self.intervals_14bit_15bit)
+		# self.ui.Interval.addItems(self.intervals_14bit_15bit)
 		self.ui.SampleRate.setText(self.sampleRates_14bit_15bit[0])
 		
 		# Calculate rotation time
@@ -536,6 +544,8 @@ if __name__ == "__main__":
 	app = QtWidgets.QApplication([])
 	harm = window()
 	resolutionUpdate()
+	# ic(harm.intervals_14bit_15bit[harm.interval])
+
 	harm.show()
 	
 	sys.exit(app.exec_())
