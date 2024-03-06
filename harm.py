@@ -241,13 +241,13 @@ def get_max_ADC_samples() -> None:
 
 def set_max_samples() -> None:
 	''' Установка количества сэмплов до и после срабатывания триггера '''
-	harm.preTriggerSamples = 5000
-	harm.postTriggerSamples = 5000
+	harm.preTriggerSamples = 0
+	harm.postTriggerSamples = 10000000
 	harm.maxSamples = harm.preTriggerSamples + harm.postTriggerSamples
 
 def set_timebase() -> None:
 	# Установка частоты сэмплирования
-	harm.timebase = 100000 # 100000 == 4-8 sec
+	harm.timebase = 64 # 64 == 500 нс
 	harm.timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(harm.timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
