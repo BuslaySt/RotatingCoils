@@ -1,12 +1,11 @@
 from icecream import ic # Для дебага
-from time import time
+import time
 
 from PyQt5 import QtWidgets
 from harmonic import Ui_MainWindow  #модуль дизайна
 import calc
 
 import sys
-# import time
 import pandas as pd
 import numpy as np
 
@@ -289,7 +288,6 @@ def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
 	# Подключение к осциллографу
 	# Установка разрешения
-	time1 = time()
 	open_scope_unit()
 
 	setup_analogue_channels()
@@ -401,17 +399,20 @@ def start_record_data() -> None:
 	harm.data['D4'] = bufferDPort0[3]
 	
 	df = pd.DataFrame(harm.data)
-	time2 = time()
-	ic(time2-time1)
 
 	ic(df.info())
 	ic(df.head())
 	
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
-
-	plot_data()
-
+	print("ok")
+	# plot_data()
+	print("plot ok")
+	time.sleep(25)
+	print("Calculating...")
+	# calc_results(df)
+	df.to_csv("data1.csv")
+	print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
 	r = 1.45
