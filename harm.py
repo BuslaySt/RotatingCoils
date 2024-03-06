@@ -3,6 +3,7 @@ from time import time
 
 from PyQt5 import QtWidgets
 from harmonic import Ui_MainWindow  #модуль дизайна
+import calc
 
 import sys
 # import time
@@ -411,6 +412,19 @@ def start_record_data() -> None:
 
 	plot_data()
 
+
+def calc_results(df: pd.core.frame.DataFrame) -> None:
+	r = 1.45
+	h = 1.4
+
+	result = calc.integr(df)
+	sens, Sens = calc.qcoef(r, h)
+
+	comp, uncomp = result
+
+	final_result = calc.compute(comp, uncomp, sens, Sens, r)
+	ic(final_result)
+
 def plot_data() -> None:
 	# plot data from analogue and digital channels 
 	plt.figure(num='PicoScope 5000a ports')
@@ -463,14 +477,6 @@ def stop_record_data():
 	assert_pico_ok(harm.status["close"])
 	print("Data recording stopped")
 
-# ---------- Serial ----------
-portList = serial.tools.list_ports.comports(include_links=False)
-comPorts = []
-for item in portList:
-	comPorts.append(item.device)
-print("Available COM ports: " + str(comPorts))
-#port = serial.Serial(str(comPorts[0]))
-
 class window(QtWidgets.QMainWindow):
 	def __init__(self):
 		super(window, self).__init__()
@@ -505,7 +511,15 @@ class window(QtWidgets.QMainWindow):
 		self.chandle = ctypes.c_int16()
 		self.status = {}
 
-		for port in comPorts:
+		# ---------- Serial ----------
+		portList = serial.tools.list_ports.comports(include_links=False)
+		self.comPorts = []
+		for item in portList:
+			self.comPorts.append(item.device)
+		print("Available COM ports: " + str(self.comPorts))
+		#port = serial.Serial(str(comPorts[0]))
+
+		for port in self.comPorts:
 			self.ui.cbox_SerialPort.addItem(port)
 		
 		#self.ui.cbox_SerialPort.currentIndexChanged.connect(portChanged)
