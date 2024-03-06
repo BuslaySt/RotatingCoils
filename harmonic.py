@@ -306,7 +306,7 @@ class Ui_MainWindow(object):
         self.Deceleration.setText(_translate("MainWindow", "20"))
         self.lbl_Deceleration.setText(_translate("MainWindow", "Торможение, мс"))
         self.lbl_Speed.setText(_translate("MainWindow", "Скорость, град/сек"))
-        self.Speed.setText(_translate("MainWindow", "60"))
+        self.Speed.setText(_translate("MainWindow", "120"))
         self.btn_StopRotation.setText(_translate("MainWindow", "Стоп"))
         self.Turns.setText(_translate("MainWindow", "10"))
         self.lbl_Turns.setText(_translate("MainWindow", "Количество оборотов"))
