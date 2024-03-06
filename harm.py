@@ -374,6 +374,7 @@ def start_record_data() -> None:
 	assert_pico_ok(harm.status["getValues"])
 
 	print("Data collection complete.")
+	stop_record_data()
 
 	# Create time data
 	time_axis = np.linspace(0, (cmaxSamples.value - 1) * harm.timeIntervalns.value, cmaxSamples.value)
@@ -400,30 +401,31 @@ def start_record_data() -> None:
 	harm.data['D4'] = bufferDPort0[3]
 	
 	df = pd.DataFrame(harm.data)
-	print(df[df["D4"]!="b'0'"])
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
 	ic(df["D4"].value_counts())
-	# ic(df.describe())
 
+	plot_data()
+
+def plot_data() -> None:
 	# plot data from analogue and digital channels 
 	plt.figure(num='PicoScope 5000a ports')
 
 	plt.subplot(3,1,1)
 	plt.title("Plot of ports' data vs. time")
 	if harm.ui.Channel1Enable.isChecked():
-		plt.plot(time_axis, adc2mVChAMax, label='ch A')
+		plt.plot(harm.data['timestamp'], harm.data['ch_a'], label='ch A')
 	if harm.ui.Channel2Enable.isChecked():
-		plt.plot(time_axis, adc2mVChBMax[:], label='ch B')
+		plt.plot(harm.data['timestamp'], harm.data['ch_b'][:], label='ch B')
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
 
 	plt.subplot(3,1,2)
 	if harm.ui.Channel3Enable.isChecked():
-		plt.plot(time_axis, adc2mVChCMax[:], label='ch C')
+		plt.plot(harm.data['timestamp'], harm.data['ch_c'][:], label='ch C')
 	if harm.ui.Channel4Enable.isChecked():
-		plt.plot(time_axis, adc2mVChDMax[:], label='ch D')
+		plt.plot(harm.data['timestamp'], harm.data['ch_d'][:], label='ch D')
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
@@ -431,22 +433,22 @@ def start_record_data() -> None:
 	# plt.figure(num='PicoScope 5000a digital ports')
 	
 	# plt.title('Plot of Digital Port 0 digital channels vs. time')
-	# plt.plot(time_axis, bufferDPort0[0], label='D7')  # D7 is the first array in the tuple.
-	# plt.plot(time_axis, bufferDPort0[1], label='D6')
-	# plt.plot(time_axis, bufferDPort0[2], label='D5')
+	# plt.plot(harm.data['timestamp'], harm.data['D7'], label='D7')  # D7 is the first array in the tuple.
+	# plt.plot(harm.data['timestamp'], harm.data['D6'], label='D6')
+	# plt.plot(harm.data['timestamp'], harm.data['D5'], label='D5')
 	plt.subplot(3,1,3)
-	plt.plot(time_axis, bufferDPort0[3], label='D4')
-	# plt.plot(time_axis, bufferDPort0[4], label='D3')
-	# plt.plot(time_axis, bufferDPort0[5], label='D2')
-	# plt.plot(time_axis, bufferDPort0[6], label='D1')
-	# plt.plot(time_axis, bufferDPort0[7], label='D0')  # D0 is the last array in the tuple.
+	plt.plot(harm.data['timestamp'], harm.data['D4'], label='D4')
+	# plt.plot(harm.data['timestamp'], harm.data['D3'], label='D3')
+	# plt.plot(harm.data['timestamp'], harm.data['D2'], label='D2')
+	# plt.plot(harm.data['timestamp'], harm.data['D1'], label='D1')
+	# plt.plot(harm.data['timestamp'], harm.data['D0'], label='D0')  # D0 is the last array in the tuple.
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Logic Level')
 	plt.legend(loc="upper right")
 	
 	plt.show()
 
-	stop_record_data()
+
 	
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
