@@ -296,7 +296,8 @@ def start_record_data() -> None:
 	get_max_ADC_samples()
 	set_max_samples()
 	set_timebase()
-
+	
+	time0 = time.time()
 	# Запуск сбора данных
 	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, harm.preTriggerSamples, harm.postTriggerSamples, harm.timebase, None, 0, None, None)
 	assert_pico_ok(harm.status["runBlock"])
@@ -307,6 +308,8 @@ def start_record_data() -> None:
 	while ready.value == check.value:
 		harm.status["isReady"] = ps.ps5000aIsReady(harm.chandle, ctypes.byref(ready))
 	
+	time1 = time.time()
+	print(time1-time0)
 	# Создание буферов данных
 	bufferAMax = (ctypes.c_int16 * harm.maxSamples)()
 	bufferAMin = (ctypes.c_int16 * harm.maxSamples)()
@@ -360,7 +363,8 @@ def start_record_data() -> None:
 	set_digital_trigger()
 
 	print("Starting data collection...")
-
+	time2 = time.time()
+	print(time2-time1)
 	# Выделение памяти для переполнения
 	overflow = ctypes.c_int16()
 	
@@ -372,7 +376,11 @@ def start_record_data() -> None:
 	assert_pico_ok(harm.status["getValues"])
 
 	print("Data collection complete.")
+	time3 = time.time()
+	print(time3-time2)
 	stop_record_data()
+	time4 = time.time()
+	print(time4-time3)
 
 	# Create time data
 	time_axis = np.linspace(0, (cmaxSamples.value - 1) * harm.timeIntervalns.value, cmaxSamples.value)
@@ -402,16 +410,17 @@ def start_record_data() -> None:
 
 	ic(df.info())
 	ic(df.head())
+	ic(df.tail())
 	
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
 	print("ok")
-	# plot_data()
+	plot_data()
 	print("plot ok")
-	time.sleep(25)
+	# time.sleep(25)
 	print("Calculating...")
 	# calc_results(df)
-	df.to_csv("data1.csv")
+	# df.to_csv("data3.csv")
 	print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
@@ -429,7 +438,6 @@ def calc_results(df: pd.core.frame.DataFrame) -> None:
 def plot_data() -> None:
 	# plot data from analogue and digital channels 
 	plt.figure(num='PicoScope 5000a ports')
-
 	plt.subplot(3,1,1)
 	plt.title("Plot of ports' data vs. time")
 	if harm.ui.Channel1Enable.isChecked():
@@ -439,7 +447,6 @@ def plot_data() -> None:
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
-
 	plt.subplot(3,1,2)
 	if harm.ui.Channel3Enable.isChecked():
 		plt.plot(harm.data['timestamp'], harm.data['ch_c'][:], label='ch C')
@@ -448,7 +455,6 @@ def plot_data() -> None:
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Voltage (mV)')
 	plt.legend(loc="upper right")
-
 	# plt.figure(num='PicoScope 5000a digital ports')
 	
 	# plt.title('Plot of Digital Port 0 digital channels vs. time')
@@ -464,7 +470,6 @@ def plot_data() -> None:
 	plt.xlabel('Time (ns)')
 	plt.ylabel('Logic Level')
 	plt.legend(loc="upper right")
-	
 	plt.show()
 	
 def stop_record_data():
@@ -540,7 +545,7 @@ class window(QtWidgets.QMainWindow):
 		self.ui.Channel1Range.addItems(self.ranges)
 		self.ui.Channel2Range.addItems(self.ranges)
 		self.ui.Channel3Range.addItems(self.ranges)
-		self.ui.Channel3Range.setCurrentText('1 V')
+		self.ui.Channel3Range.setCurrentText('2 V')
 		self.ui.Channel4Range.addItems(self.ranges)
 		# self.ui.Interval.addItems(self.intervals_14bit_15bit)
 		self.ui.SampleRate.setText(self.sampleRates_14bit_15bit[0])
