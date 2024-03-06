@@ -1,4 +1,5 @@
 from icecream import ic # Для дебага
+from time import time
 
 from PyQt5 import QtWidgets
 from harmonic import Ui_MainWindow  #модуль дизайна
@@ -252,10 +253,8 @@ def set_timebase() -> None:
 	# Установка частоты сэмплирования
 	if harm.resolution in [14, 15]:
 		harm.timebase = harm.intervals_14bit_15bit[harm.interval] # 65 == 504 нс
-		ic(harm.intervals_14bit_15bit[harm.interval])
 	elif harm.resolution == 16:
 		harm.timebase = harm.intervals_16bit[harm.interval] # 25 == 512 нс
-		ic(harm.intervals_14bit_15bit[harm.interval])
 	harm.timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(harm.timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
@@ -289,7 +288,7 @@ def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
 	# Подключение к осциллографу
 	# Установка разрешения
-
+	time1 = time()
 	open_scope_unit()
 
 	setup_analogue_channels()
@@ -401,9 +400,14 @@ def start_record_data() -> None:
 	harm.data['D4'] = bufferDPort0[3]
 	
 	df = pd.DataFrame(harm.data)
+	time2 = time()
+	ic(time2-time1)
+
+	ic(df.info())
+	ic(df.head())
+	
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
-	ic(df["D4"].value_counts())
 
 	plot_data()
 
@@ -447,8 +451,6 @@ def plot_data() -> None:
 	plt.legend(loc="upper right")
 	
 	plt.show()
-
-
 	
 def stop_record_data():
 	''' -- Stop recording oscilloscope data '''
@@ -546,7 +548,6 @@ if __name__ == "__main__":
 	app = QtWidgets.QApplication([])
 	harm = window()
 	resolutionUpdate()
-	# ic(harm.intervals_14bit_15bit[harm.interval])
 
 	harm.show()
 	
