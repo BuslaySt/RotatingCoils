@@ -1,5 +1,4 @@
 from icecream import ic # Для дебага
-from time import time
 
 from PyQt5 import QtWidgets
 from harmonic import Ui_MainWindow  #модуль дизайна
@@ -246,7 +245,7 @@ def get_max_ADC_samples() -> None:
 def set_max_samples() -> None:
 	''' Установка количества сэмплов до и после срабатывания триггера '''
 	harm.preTriggerSamples = 0
-	harm.postTriggerSamples = 10000000
+	harm.postTriggerSamples = 10000
 	harm.maxSamples = harm.preTriggerSamples + harm.postTriggerSamples
 
 def set_timebase() -> None:
@@ -289,7 +288,6 @@ def start_record_data() -> None:
 	''' -- Recording oscilloscope data --'''
 	# Подключение к осциллографу
 	# Установка разрешения
-	time1 = time()	
 	open_scope_unit()
 		
 	setup_analogue_channels()
@@ -400,11 +398,9 @@ def start_record_data() -> None:
 	harm.df['D0'] = bufferDPort0[7]
 	harm.df['D4'] = bufferDPort0[3]
 
-	time2 = time()
-	ic(time2-time1)
-
 	ic(harm.df.info())
 	ic(harm.df.head())
+	ic(harm.df.tail())
 	ic(harm.df.describe())
 	
 	# harm.df['D0'] = harm.df['D0'].apply(int)
@@ -528,7 +524,7 @@ class window(QtWidgets.QMainWindow):
 		self.ui.Channel1Range.addItems(self.ranges)
 		self.ui.Channel2Range.addItems(self.ranges)
 		self.ui.Channel3Range.addItems(self.ranges)
-		self.ui.Channel3Range.setCurrentText('1 V')
+		self.ui.Channel3Range.setCurrentText('2 V')
 		self.ui.Channel4Range.addItems(self.ranges)
 		# self.ui.Interval.addItems(self.intervals_14bit_15bit)
 		self.ui.SampleRate.setText(self.sampleRates_14bit_15bit[0])
