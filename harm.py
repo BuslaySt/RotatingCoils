@@ -408,16 +408,15 @@ def start_record_data() -> None:
 	
 	df = pd.DataFrame(harm.data)
 
-	ic(df.info())
-	ic(df.head())
-	ic(df.tail())
+	# ic(df.info())
+	# ic(df.head())
+	# ic(df.tail())
 	
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
-	print("ok")
+
 	plot_data()
 	print("plot ok")
-	# time.sleep(25)
 	print("Calculating...")
 	# calc_results(df)
 	# df.to_csv("data3.csv")
