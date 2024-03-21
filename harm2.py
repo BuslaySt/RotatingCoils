@@ -245,7 +245,7 @@ def get_max_ADC_samples() -> None:
 def set_max_samples() -> None:
 	''' Установка количества сэмплов до и после срабатывания триггера '''
 	harm.preTriggerSamples = 0
-	harm.postTriggerSamples = 10000
+	harm.postTriggerSamples = 5000000 #изменено с 10000
 	harm.maxSamples = harm.preTriggerSamples + harm.postTriggerSamples
 
 def set_timebase() -> None:
