@@ -288,7 +288,7 @@ def compute(comp, uncomp, sens, Sens, r) -> list:
 			
 	return(B_otn)	
 
-if __name__ == "0":
+if __name__ == "__main__":
 	r = 1.45
 	h = 1.4
 
