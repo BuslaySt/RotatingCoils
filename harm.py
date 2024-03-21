@@ -36,13 +36,13 @@ def rotate() -> None:
 
 def start() -> None:
 	''' -- Start coil rotation --'''
-	print("start")
+	print("start rotation")
 
 def stop() -> None:
 	''' -- Stop coil rotation --'''
 	try:
 		harm.servo.write_register(0x6002, 0x40, functioncode=6)
-		print("stop")
+		print("stop rotation")
 	except NameError:
 		print("servo not found")
 
@@ -297,6 +297,7 @@ def start_record_data() -> None:
 	set_max_samples()
 	set_timebase()
 	
+	print("Starting data collection...")
 	# Запуск сбора данных
 	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, harm.preTriggerSamples, harm.postTriggerSamples, harm.timebase, None, 0, None, None)
 	assert_pico_ok(harm.status["runBlock"])
@@ -357,9 +358,8 @@ def start_record_data() -> None:
 	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), harm.maxSamples, 0, 0)
 	assert_pico_ok(harm.status["SetDataBuffersDigital"])
 
-	# set_digital_trigger()
+	set_digital_trigger()
 
-	print("Starting data collection...")
 	# Выделение памяти для переполнения
 	overflow = ctypes.c_int16()
 	
@@ -372,6 +372,7 @@ def start_record_data() -> None:
 
 	print("Data collection complete.")
 	stop_record_data()
+	stop()
 
 	# Create time data
 	time_axis = np.linspace(0, (cmaxSamples.value - 1) * harm.timeIntervalns.value, cmaxSamples.value)
@@ -399,18 +400,18 @@ def start_record_data() -> None:
 	
 	df = pd.DataFrame(harm.data)
 
-	# ic(df.info())
-	# ic(df.head())
-	# ic(df.tail())
-	
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
+
+	df.info()
+	ic(df.head())
+	ic(df.tail())
 
 	plot_data()
 	print("plot ok")
 	print("Calculating...")
-	# calc_results(df)
-	# df.to_csv("data3.csv")
+	calc_results(df)
+	df.to_csv("data3.csv")
 	print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
