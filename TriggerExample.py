@@ -99,7 +99,7 @@ assert_pico_ok(status["SetDigitalPort"])
 
 # Set the number of sample to be collected
 preTriggerSamples = 10
-postTriggerSamples = 10000000
+postTriggerSamples = 5000000
 totalSamples = preTriggerSamples + postTriggerSamples
 
 # Gets timebase information
@@ -155,7 +155,7 @@ status["setTriggerChannelConditionsV2"] = ps.ps5000aSetTriggerChannelConditionsV
                                                                                   info)
 assert_pico_ok(status["setTriggerChannelConditionsV2"])
 
-directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_3"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
+directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_3"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_RISING"])
 nDirections = 1
 status["setTriggerDigitalPortProperties"] = ps.ps5000aSetTriggerDigitalPortProperties(chandle,
                                                                                       ctypes.byref(directions),
