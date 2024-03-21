@@ -358,7 +358,7 @@ def start_record_data() -> None:
 	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), harm.maxSamples, 0, 0)
 	assert_pico_ok(harm.status["SetDataBuffersDigital"])
 
-	set_digital_trigger()
+	# set_digital_trigger()
 
 	# Выделение памяти для переполнения
 	overflow = ctypes.c_int16()
@@ -403,14 +403,10 @@ def start_record_data() -> None:
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
 
-	df.info()
-	ic(df.head())
-	ic(df.tail())
-
 	plot_data()
 	print("plot ok")
-	print("Calculating...")
-	calc_results(df)
+	# print("Calculating...")
+	# calc_results(df)
 	df.to_csv("data3.csv")
 	print('Save completed')
 
