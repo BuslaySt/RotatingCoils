@@ -255,6 +255,7 @@ def set_timebase() -> None:
 		harm.timebase = harm.intervals_14bit_15bit[harm.interval] # 65 == 504 нс
 	elif harm.resolution == 16:
 		harm.timebase = harm.intervals_16bit[harm.interval] # 25 == 512 нс
+	ic(harm.timebase)		
 	harm.timeIntervalns = ctypes.c_float()
 	returnedMaxSamples = ctypes.c_int32()
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(harm.timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
@@ -297,6 +298,8 @@ def start_record_data() -> None:
 	set_max_samples()
 	set_timebase()
 	
+	set_digital_trigger()
+
 	print("Starting data collection...")
 	# Запуск сбора данных
 	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, harm.preTriggerSamples, harm.postTriggerSamples, harm.timebase, None, 0, None, None)
@@ -407,8 +410,9 @@ def start_record_data() -> None:
 	print("plot ok")
 	# print("Calculating...")
 	# calc_results(df)
-	df.to_csv("data3.csv")
-	print('Save completed')
+	
+	# df.to_csv("data3.csv")
+	# print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
 	r = 1.45
