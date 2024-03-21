@@ -98,7 +98,7 @@ assert_pico_ok(status["SetDigitalPort"])
 #Set a trigger on digital channel
 
 # Set the number of sample to be collected
-preTriggerSamples = 1000
+preTriggerSamples = 10000
 postTriggerSamples = 10000000
 totalSamples = preTriggerSamples + postTriggerSamples
 
@@ -215,21 +215,21 @@ print ("Data collection complete.")
 # Obtain binary for Digital Port 0
 # The tuple returned contains the channels in order (D7, D6, D5, ... D0).
 bufferDPort0 = splitMSODataFast(cTotalSamples, bufferDPort0Max)
-
+print("1")
 # Creates the time data
 time = np.linspace(0, (cTotalSamples.value - 1) * timeIntervalNs.value, cTotalSamples.value)
-
+print("2")
 data = {}
 data['time'] = time
 data['data0'] = bufferDPort0[0]
 data['data4'] = bufferDPort0[4]
-
+print("3")
 df = pd.DataFrame(data)
 df['data0'] = df['data0'].apply(int)
 df['data4'] = df['data4'].apply(int)
-
+print("4")
 ic(df.head())
-ic(df["data0"].value_counts())
+# ic(df["data0"].value_counts())
 ic(df["data4"].value_counts())
 
 print ("Plotting data...")
