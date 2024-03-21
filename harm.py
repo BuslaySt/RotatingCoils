@@ -360,7 +360,7 @@ def start_record_data() -> None:
 	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), harm.maxSamples, 0, 0)
 	assert_pico_ok(harm.status["SetDataBuffersDigital"])
 
-	set_digital_trigger()
+	# set_digital_trigger()
 
 	print("Starting data collection...")
 	time2 = time.time()
