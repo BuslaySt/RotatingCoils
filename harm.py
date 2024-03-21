@@ -1,5 +1,5 @@
 from icecream import ic # Для дебага
-import time
+# import time
 
 from PyQt5 import QtWidgets
 from harmonic import Ui_MainWindow  #модуль дизайна
@@ -260,7 +260,7 @@ def set_timebase() -> None:
 	harm.status["getTimebase2"] = ps.ps5000aGetTimebase2(harm.chandle, harm.timebase, harm.maxSamples, ctypes.byref(harm.timeIntervalns), ctypes.byref(returnedMaxSamples), 0)
 	assert_pico_ok(harm.status["getTimebase2"])
 
-def set_digital_trigger():
+def set_digital_trigger() -> None:
 	# set the digital trigger for a high bit on digital channel 4
 	conditions = ps.PS5000A_CONDITION(ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"], ps.PS5000A_TRIGGER_STATE["PS5000A_CONDITION_TRUE"])
 	nConditions = 1
@@ -297,7 +297,6 @@ def start_record_data() -> None:
 	set_max_samples()
 	set_timebase()
 	
-	time0 = time.time()
 	# Запуск сбора данных
 	harm.status["runBlock"] = ps.ps5000aRunBlock(harm.chandle, harm.preTriggerSamples, harm.postTriggerSamples, harm.timebase, None, 0, None, None)
 	assert_pico_ok(harm.status["runBlock"])
@@ -308,8 +307,6 @@ def start_record_data() -> None:
 	while ready.value == check.value:
 		harm.status["isReady"] = ps.ps5000aIsReady(harm.chandle, ctypes.byref(ready))
 	
-	time1 = time.time()
-	print(time1-time0)
 	# Создание буферов данных
 	bufferAMax = (ctypes.c_int16 * harm.maxSamples)()
 	bufferAMin = (ctypes.c_int16 * harm.maxSamples)()
@@ -360,11 +357,9 @@ def start_record_data() -> None:
 	harm.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(harm.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), harm.maxSamples, 0, 0)
 	assert_pico_ok(harm.status["SetDataBuffersDigital"])
 
-	set_digital_trigger()
+	# set_digital_trigger()
 
 	print("Starting data collection...")
-	time2 = time.time()
-	print(time2-time1)
 	# Выделение памяти для переполнения
 	overflow = ctypes.c_int16()
 	
@@ -376,11 +371,7 @@ def start_record_data() -> None:
 	assert_pico_ok(harm.status["getValues"])
 
 	print("Data collection complete.")
-	time3 = time.time()
-	print(time3-time2)
 	stop_record_data()
-	time4 = time.time()
-	print(time4-time3)
 
 	# Create time data
 	time_axis = np.linspace(0, (cmaxSamples.value - 1) * harm.timeIntervalns.value, cmaxSamples.value)
