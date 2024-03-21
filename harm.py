@@ -274,7 +274,7 @@ def set_digital_trigger() -> None:
 																					info)
 	assert_pico_ok(harm.status["setTriggerChannelConditionsV2"])
 
-	directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_4"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
+	directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_3"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
 	nDirections = 1
 	harm.status["setTriggerDigitalPortProperties"] = ps.ps5000aSetTriggerDigitalPortProperties(harm.chandle,
 																						ctypes.byref(directions),
