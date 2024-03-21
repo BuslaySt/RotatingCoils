@@ -98,7 +98,7 @@ assert_pico_ok(status["SetDigitalPort"])
 #Set a trigger on digital channel
 
 # Set the number of sample to be collected
-preTriggerSamples = 10000
+preTriggerSamples = 10
 postTriggerSamples = 10000000
 totalSamples = preTriggerSamples + postTriggerSamples
 
@@ -155,7 +155,7 @@ status["setTriggerChannelConditionsV2"] = ps.ps5000aSetTriggerChannelConditionsV
                                                                                   info)
 assert_pico_ok(status["setTriggerChannelConditionsV2"])
 
-directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_4"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
+directions = ps.PS5000A_DIGITAL_CHANNEL_DIRECTIONS(ps.PS5000A_DIGITAL_CHANNEL["PS5000A_DIGITAL_CHANNEL_3"], ps.PS5000A_DIGITAL_DIRECTION["PS5000A_DIGITAL_DIRECTION_HIGH"])
 nDirections = 1
 status["setTriggerDigitalPortProperties"] = ps.ps5000aSetTriggerDigitalPortProperties(chandle,
                                                                                       ctypes.byref(directions),
@@ -215,19 +215,18 @@ print ("Data collection complete.")
 # Obtain binary for Digital Port 0
 # The tuple returned contains the channels in order (D7, D6, D5, ... D0).
 bufferDPort0 = splitMSODataFast(cTotalSamples, bufferDPort0Max)
-print("1")
+print("Digital channels obtained")
 # Creates the time data
 time = np.linspace(0, (cTotalSamples.value - 1) * timeIntervalNs.value, cTotalSamples.value)
-print("2")
+
 data = {}
 data['time'] = time
 data['data0'] = bufferDPort0[0]
 data['data4'] = bufferDPort0[4]
-print("3")
 df = pd.DataFrame(data)
 df['data0'] = df['data0'].apply(int)
 df['data4'] = df['data4'].apply(int)
-print("4")
+
 ic(df.head())
 # ic(df["data0"].value_counts())
 ic(df["data4"].value_counts())
