@@ -336,7 +336,7 @@ if __name__ == "__main__":
 	h = 1.4
 	ic()
 	print("Reading data...")
-	df = pd.read_csv('harm_data/data2.csv', delimiter=',')
+	df = pd.read_csv('data2.csv', delimiter=',')
 
 	result = integr(df)
 
