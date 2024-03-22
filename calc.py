@@ -3,9 +3,12 @@
 # вариант для использования в качестве модуля
 # применяется округление до 6 знаков
 
-# import pandas as pd
+import pandas as pd
 import numpy as np
 import math
+from icecream import ic # Для дебага
+import time
+
 
 # time;ch_a;ch_c;D0;D4
 # filename_output = f'Result_{filename[df_count]}.txt'
@@ -15,6 +18,9 @@ def integr(df_name) -> tuple:
 	Функция вычисляет интеграл датафрейма
 	roundN - порядок округления для ускорения расчетов.
 	'''
+
+	time0 = time.time()
+
 	roundN = 5 #количество символов для округления(достаточно и 3)
 	
 	timestamp = df_name.timestamp
@@ -22,6 +28,9 @@ def integr(df_name) -> tuple:
 	ch_C = df_name.ch_c
 	tick = df_name.D0
 	zeroPulse = df_name.D4
+ 
+	ic(timestamp)
+	ic(zeroPulse)
 	
 	ch_A_norm = []
 	compSignal = []
@@ -29,15 +38,19 @@ def integr(df_name) -> tuple:
 	zeroed = []
 	tickPos = []
 	
-
 	#определяется фронт импульса 0 энкодера и позиция пишется в отдельный файл
 	for i in range(1, len(timestamp)):
 		if (zeroPulse[i-1] == 0) & (zeroPulse[i] == 1):
 			zeroed.append(i)
 		if (tick[i-1] == 0) & (tick[i] == 1):
 			tickPos.append(i)
-		for k in range(len(timestamp)):
-			compSignal.append(ch_C[k]) #для 2 каналов
+	# for k in range(len(timestamp)):
+	# 	compSignal.append(ch_C[k]) #для 2 каналов
+	
+	time1 = time.time()
+	print("Time passed:", time1-time0)
+
+	return
 
 	#вычисление постоянной составляющей
 	periods = range(2, (len(zeroed)-1))
@@ -292,11 +305,12 @@ if __name__ == "__main__":
 	r = 1.45
 	h = 1.4
 
-	result = calc.integr(df)
-	sens = calc.qcoef(r, h)[0]
-	Sens = calc.qcoef(r, h)[1]
+	df = pd.read_csv('harm_data/data3.csv', delimiter=',')
 
-	comp = result[0]
-	uncomp = result[1]
+	result = integr(df)
+	sens, Sens = qcoef(r, h)
 
-	final_result = calc.compute(comp, uncomp, sens, Sens, r)
+	comp, uncomp = result
+
+	final_result = compute(comp, uncomp, sens, Sens, r)
+	ic(final_result)
