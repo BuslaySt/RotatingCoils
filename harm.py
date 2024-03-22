@@ -406,24 +406,27 @@ def start_record_data() -> None:
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
 
-	plot_data()
-	print("plot ok")
-	# print("Calculating...")
-	# calc_results(df)
+	# plot_data()
+	# print("plot ok")
+	print("Calculating...")
+	calc_results(df)
 	
-	# df.to_csv("data3.csv")
-	# print('Save completed')
+	# print("Writing to file...")
+	# df.to_csv("data5.csv")
+	print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
 	r = 1.45
 	h = 1.4
 
+	ic()
 	result = calc.integr(df)
-	sens, Sens = calc.qcoef(r, h)
 
+	sens, Sens = calc.qcoef(r, h)
 	comp, uncomp = result
 
 	final_result = calc.compute(comp, uncomp, sens, Sens, r)
+	# plt.plot(final_result)	
 	ic(final_result)
 
 def plot_data() -> None:
