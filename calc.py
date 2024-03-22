@@ -49,8 +49,8 @@ def integr(df_name):
 	allPeriodInt = []
 	allPeriodUncomp = []
 	
-	#вычисление постоянной составляющей
-	#переработать устранение постоянной составляющей
+	# вычисление постоянной составляющей
+	# переработать устранение постоянной составляющей
 	summaComp = 0
 	summaUncomp = 0
 	
@@ -61,14 +61,15 @@ def integr(df_name):
 	constantComp = summaComp/ ((zeroed[-1]+1)-zeroed[0]) 
 	constantUncomp = summaUncomp/ ((zeroed[-1]+1)-zeroed[0])
 	
+	ic()
 	for i in tqdm(range(zeroed[0], (zeroed[-1]+1)),"Calculating periods"):
 		ch_A_norm.append(round((ch_A[i] - constantUncomp), roundN))
 		compSignalR.append(round((ch_C[i] - constantComp), roundN))
 	
 	
 	ic('periods, total', periods)
-	for p in tqdm(periods, "Periods"):
-		
+	for p in periods:
+
 		print('Integral calculation for period', p)
 		step = timestamp[zeroed[p]+1] - timestamp[zeroed[p]]
 		integral = []
@@ -100,7 +101,7 @@ def integr(df_name):
 		
 		allPeriodInt.append(integral)
 		allPeriodUncomp.append(integralUncompA)
-		print('CIntegral calculation for this period finished')
+		print('Integral calculation for this period finished')
 	#return(allPeriodInt, allPeriodUncomp)	
 
 	#вычисление усредненного значения интегралов по нескольким периодам через транспонирование двухмерного списка			
@@ -140,6 +141,7 @@ def integr(df_name):
 		# avgIntUncomp.append(sum(item)/len(allPeriodUncomp))		
 	
 	#return(allPeriodUncomp, avgIntComp, avgIntUncomp)
+	ic()
 	return(avgIntComp, avgIntUncomp)
 	
 def qcoef(r, h):
@@ -180,6 +182,7 @@ def qcoef(r, h):
 		s_BC = math.pow(roC, n)*(1 - math.pow(-1, n)) - math.pow(-1, n)*math.pow(roB, n)*(1 - math.pow(betaB, n))
 		sens.append(s_ED - s_BC)
 	Sens = (1 - math.pow(betaE, N))
+	ic()
 	return(sens, Sens)
 
 def scoef(r, h):
@@ -221,9 +224,8 @@ def scoef(r, h):
 		s_ED = 1 - math.pow(betaE, n) - muD*math.pow(roD, n)*(1 - math.pow(betaD, n))
 		s_BC = muC*math.pow(roC, n)*(1 - math.pow(-1, n)) - math.pow(-1, n)*math.pow(roB, n)*(1 - math.pow(betaB, n))
 		sens.append(s_ED + s_BC)
-		
-		
 	Sens = (1 - math.pow(betaE, N))
+	ic()
 	return(sens, Sens)
 		
 def compute(comp, uncomp, sens, Sens, r):
@@ -235,7 +237,7 @@ def compute(comp, uncomp, sens, Sens, r):
 	p = []
 	q = []
 	
-	for n in tqdm(range (1, 20), "order"):
+	for n in range (1, 20):
 		f_cos = []
 		f_sin = []
 	
@@ -296,7 +298,7 @@ def compute(comp, uncomp, sens, Sens, r):
 	start = 0 #начальный угол
 	end = len(uncomp)
 	
-	for teta in tqdm(range(start, end), "Theta"):
+	for teta in range(start, end):
 		# подынтегральные выражения для расчета коэффициентов разложения в ряд Фурье
 		F_cos.append(uncomp[teta]*math.cos(N*teta*math.pi/180))
 		F_sin.append(uncomp[teta]*math.sin(N*teta*math.pi/180))#
@@ -324,21 +326,21 @@ def compute(comp, uncomp, sens, Sens, r):
 
 	R = math.sqrt(math.pow(Pee, 2) + math.pow(Quu, 2))/math.sqrt(math.pow(p[1], 2) + math.pow(q[1], 2))
 
-	for n in tqdm(range (3, 16), "Order2"):
+	for n in range (3, 16):
 		B_otn.append (math.pow(10, 4)*(n*Sens*math.sqrt(math.pow(p[n], 2) + math.pow(q[n], 2)))/(N*sens[n]*math.sqrt(math.pow(Pee, 2) + math.pow(Quu, 2))))
 			
-	return(B_otn)	
+	return(B_otn)
 
 if __name__ == "__main__":
 	r = 1.45
 	h = 1.4
-
+	ic()
 	print("Reading data...")
-	df = pd.read_csv('harm_data/data1.csv', delimiter=',')
+	df = pd.read_csv('harm_data/data2.csv', delimiter=',')
 
 	result = integr(df)
-	sens, Sens = qcoef(r, h)
 
+	sens, Sens = qcoef(r, h)
 	comp, uncomp = result
 
 	final_result = compute(comp, uncomp, sens, Sens, r)
