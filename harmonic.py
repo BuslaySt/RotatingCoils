@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1171, 905)
+        MainWindow.resize(1068, 683)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -320,6 +320,7 @@ class Ui_MainWindow(object):
         self.lbl_Time.setText(_translate("MainWindow", "Время движения, сек"))
         self.Time.setText(_translate("MainWindow", "0"))
         self.groupBox_ADC.setTitle(_translate("MainWindow", "Настройки АЦП"))
+        self.cbox_SerialPort_Instrument.setCurrentText(_translate("MainWindow", "АКИП-75442D MSO"))
         self.cbox_SerialPort_Instrument.setItemText(0, _translate("MainWindow", "АКИП-75442D MSO"))
         self.lbl_Instrument.setText(_translate("MainWindow", "Инструмент"))
         self.lbl_Interval.setText(_translate("MainWindow", "Интервал сэмплирования, нс"))
