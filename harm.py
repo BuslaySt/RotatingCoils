@@ -385,7 +385,7 @@ def start_record_data() -> None:
 
 	print("Data collection complete.")
 	stop_record_data()
-	stop()
+	# stop()
 
 	# Create time data
 	time_axis = np.linspace(0, (cmaxSamples.value - 1) * harm.timeIntervalns.value, cmaxSamples.value)
@@ -416,10 +416,10 @@ def start_record_data() -> None:
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
 
-	# plot_data()
-	# print("plot ok")
+	plot_data()
+	print("plot ok")
 	print("Calculating...")
-	calc_results(df)
+	# calc_results(df)
 	
 	# print("Writing to file...")
 	# df.to_csv("data5.csv")
