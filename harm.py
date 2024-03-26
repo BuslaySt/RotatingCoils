@@ -37,6 +37,16 @@ def rotate() -> None:
 def start() -> None:
 	''' -- Start coil rotation --'''
 	print("start rotation")
+	try:
+		harm.motorSpeed = int(harm.ui.Speed.text())
+		harm.motorAcc = int(harm.ui.Acceleration.text())
+		harm.motorDec = int(harm.ui.Deceleration.text())
+		harm.motorTurns = int(harm.ui.Turns.text())
+		data = [0x0002, 0x0000, 0x0000, harm.motorSpeed, harm.motorAcc, harm.motorDec, 0x0000, 0x0010]
+		harm.servo.write_registers(0x6200, data)
+		print("rotating..")
+	except NameError:
+		print("servo not found")
 
 def stop() -> None:
 	''' -- Stop coil rotation --'''
@@ -524,11 +534,15 @@ class window(QtWidgets.QMainWindow):
 		
 		#self.ui.cbox_SerialPort.currentIndexChanged.connect(portChanged)
 		self.ui.btn_ContRotation.clicked.connect(rotate)
+		self.ui.btn_ContRotation.hide()
 		self.ui.btn_StartRotation.clicked.connect(start)
 		self.ui.btn_StopRotation.clicked.connect(stop)
 		
+		self.ui.btn_File.hide()
 		self.ui.btn_StartRecord.clicked.connect(start_record_data)
 		self.ui.btn_StopRecord.clicked.connect(stop_record_data)
+		self.ui.btn_StopRecord.hide()
+		self.ui.btn_Autorecord.hide()
 
 		self.ui.btn_Connect.clicked.connect(init_motor)
 				
