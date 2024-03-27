@@ -538,7 +538,7 @@ class window(QtWidgets.QMainWindow):
 
 		#self.ui.cbox_SerialPort.currentIndexChanged.connect(portChanged)
 		# self.ui.btn_ContRotation.clicked.connect(rotate)
-		# self.ui.btn_ContRotation.hide()
+		self.ui.btn_ContRotation.hide()
 		self.ui.btn_StartRotation.clicked.connect(start)
 		self.ui.btn_StopRotation.clicked.connect(stop)
 		
