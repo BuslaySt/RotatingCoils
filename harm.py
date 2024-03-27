@@ -389,7 +389,7 @@ def start_record_data() -> None:
 
 	print("Data collection complete.")
 	stop_record_data()
-	# stop()
+	stop()
 
 	# Create time data
 	time_axis = np.linspace(0, (cmaxSamples.value - 1) * harm.timeIntervalns.value, cmaxSamples.value)
@@ -420,10 +420,10 @@ def start_record_data() -> None:
 	df['D0'] = df['D0'].apply(int)
 	df['D4'] = df['D4'].apply(int)
 
-	plot_data()
-	print("plot ok")
+	# plot_data()
+	# print("plot ok")
 	print("Calculating...")
-	# calc_results(df)
+	calc_results(df)
 	
 	# print("Writing to file...")
 	# df.to_csv("data5.csv")
@@ -441,7 +441,7 @@ def calc_results(df: pd.core.frame.DataFrame) -> None:
 
 	final_result = calc.compute(comp, uncomp, sens, Sens, r)
 	
-	final_axe = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+	final_axe = [n for n in range(3, 14)]
 
 	# final_result = [151016.21925893798,
 	# 		107957.02455120806,
@@ -569,8 +569,8 @@ class window(QtWidgets.QMainWindow):
 		self.ui.btn_Connect_2.clicked.connect(init_motor)
 
 		#self.ui.cbox_SerialPort.currentIndexChanged.connect(portChanged)
-		self.ui.btn_ContRotation.clicked.connect(calc_results)
-		# self.ui.btn_ContRotation.hide()
+		# self.ui.btn_ContRotation.clicked.connect(calc_results)
+		self.ui.btn_ContRotation.hide()
 		self.ui.btn_StartRotation.clicked.connect(start)
 		self.ui.btn_StopRotation.clicked.connect(stop)
 		
