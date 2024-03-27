@@ -1,7 +1,8 @@
 from icecream import ic # Для дебага
 # import time
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtGui import QIcon
 from harmonic import Ui_MainWindow  #модуль дизайна
 import calc
 
@@ -17,6 +18,9 @@ import minimalmodbus
 # Подключение необходимых модулей для осциллографа
 import ctypes
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
+
 from picosdk.ps5000a import ps5000a as ps
 from picosdk.functions import adc2mV, assert_pico_ok, mV2adc, splitMSODataFast
 
@@ -436,8 +440,29 @@ def calc_results(df: pd.core.frame.DataFrame) -> None:
 	comp, uncomp = result
 
 	final_result = calc.compute(comp, uncomp, sens, Sens, r)
-	# plt.plot(final_result)	
-	ic(final_result)
+	
+	final_axe = [1,2,3,4,5,6,7,8,9,10,11,12,13]
+
+	# final_result = [151016.21925893798,
+	# 		107957.02455120806,
+	# 		13319.513577364407,
+	# 		28529.136754847783,
+	# 		22212.989789243642,
+	# 		9470.351949227274,
+	# 		3639.282914142791,
+	# 		7193.843169766732,
+	# 		3796.862232406468,
+	# 		7588.863828055252,
+	# 		4392.052730045415,
+	# 		4396.068164598184,
+	# 		3930.9200617520723]
+
+	sc = MplCanvas(width=5, height=4, dpi=100)
+	sc.axes.plot(final_axe, final_result)
+	harm.ui.hLayout_Graph.addWidget(sc)
+	harm.ui.txt_Result.setText("Harmonics:\n"+str(final_result))
+	# plt.plot(final_result)
+	# ic(final_result)
 
 def plot_data() -> None:
 	# plot data from analogue and digital channels 
@@ -487,12 +512,19 @@ def stop_record_data():
 	assert_pico_ok(harm.status["close"])
 	print("Data recording stopped")
 
+class MplCanvas(FigureCanvasQTAgg):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(MplCanvas, self).__init__(fig)
+
 class window(QtWidgets.QMainWindow):
 	def __init__(self):
 		super(window, self).__init__()
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 		self.setFocus(True)
+		self.setWindowIcon(QIcon("logoAMTC.png"))
 
 		self.data = dict()
 
@@ -537,8 +569,8 @@ class window(QtWidgets.QMainWindow):
 		self.ui.btn_Connect_2.clicked.connect(init_motor)
 
 		#self.ui.cbox_SerialPort.currentIndexChanged.connect(portChanged)
-		# self.ui.btn_ContRotation.clicked.connect(rotate)
-		self.ui.btn_ContRotation.hide()
+		self.ui.btn_ContRotation.clicked.connect(calc_results)
+		# self.ui.btn_ContRotation.hide()
 		self.ui.btn_StartRotation.clicked.connect(start)
 		self.ui.btn_StopRotation.clicked.connect(stop)
 		
