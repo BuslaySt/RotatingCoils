@@ -531,10 +531,14 @@ class window(QtWidgets.QMainWindow):
 
 		for port in self.comPorts:
 			self.ui.cbox_SerialPort.addItem(port)
-		
+			self.ui.cbox_SerialPort_2.addItem(port)
+
+		self.ui.btn_Connect.clicked.connect(init_motor)
+		self.ui.btn_Connect_2.clicked.connect(init_motor)
+
 		#self.ui.cbox_SerialPort.currentIndexChanged.connect(portChanged)
-		self.ui.btn_ContRotation.clicked.connect(rotate)
-		self.ui.btn_ContRotation.hide()
+		# self.ui.btn_ContRotation.clicked.connect(rotate)
+		# self.ui.btn_ContRotation.hide()
 		self.ui.btn_StartRotation.clicked.connect(start)
 		self.ui.btn_StopRotation.clicked.connect(stop)
 		
@@ -544,8 +548,6 @@ class window(QtWidgets.QMainWindow):
 		self.ui.btn_StopRecord.hide()
 		self.ui.btn_Autorecord.hide()
 
-		self.ui.btn_Connect.clicked.connect(init_motor)
-				
 		# Init Pico parameters
 		self.ui.Resolution.addItems(self.resolutions)
 		self.ui.Channel1Range.addItems(self.ranges)
