@@ -425,9 +425,9 @@ def start_record_data() -> None:
 	# print("Calculating...")
 	# calc_results(df)
 	
-	print("Writing to file...")
-	df.to_csv("data13.csv")
-	print('Save completed')
+	# print("Writing to file...")
+	# df.to_csv("data22.csv")
+	# print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
 	r = 1.45
@@ -440,25 +440,10 @@ def calc_results(df: pd.core.frame.DataFrame) -> None:
 	comp, uncomp = result
 
 	final_result = calc.compute(comp, uncomp, sens, Sens, r)
-	
-	final_axe = [n for n in range(3, 14)]
-
-	# final_result = [151016.21925893798,
-	# 		107957.02455120806,
-	# 		13319.513577364407,
-	# 		28529.136754847783,
-	# 		22212.989789243642,
-	# 		9470.351949227274,
-	# 		3639.282914142791,
-	# 		7193.843169766732,
-	# 		3796.862232406468,
-	# 		7588.863828055252,
-	# 		4392.052730045415,
-	# 		4396.068164598184,
-	# 		3930.9200617520723]
+	final_axis_x = [n for n in range(3, (len(final_result)+3))]
 
 	sc = MplCanvas(width=5, height=4, dpi=100)
-	sc.axes.plot(final_axe, final_result)
+	sc.axes.plot(final_axis_x, final_result)
 	harm.ui.hLayout_Graph.addWidget(sc)
 	harm.ui.txt_Result.setText("Harmonics:\n"+str(final_result))
 	# plt.plot(final_result)
