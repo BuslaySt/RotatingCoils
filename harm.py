@@ -422,11 +422,11 @@ def start_record_data() -> None:
 
 	# plot_data()
 	# print("plot ok")
-	print("Calculating...")
-	calc_results(df)
+	# print("Calculating...")
+	# calc_results(df)
 	
-	# print("Writing to file...")
-	# df.to_csv("data5.csv")
+	print("Writing to file...")
+	df.to_csv("data13.csv")
 	print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
