@@ -422,8 +422,8 @@ def start_record_data() -> None:
 
 	# plot_data()
 	# print("plot ok")
-	print("Calculating...")
-	calc_results(df)
+	# print("Calculating...")
+	# calc_results(df)
 	
 	# print("Writing to file...")
 	# df.to_csv("data_2024-03-29_02.csv")
