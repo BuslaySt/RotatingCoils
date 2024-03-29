@@ -426,43 +426,52 @@ def start_record_data() -> None:
 	calc_results(df)
 	
 	# print("Writing to file...")
-	# df.to_csv("data5.csv")
-	print('Save completed')
+	# df.to_csv("data_2024-03-29_02.csv")
+	# print('Save completed')
 
 def calc_results(df: pd.core.frame.DataFrame) -> None:
-	r = 1.45
-	h = 1.4
-
+	r = 1.45 #24mm coil
+	h = 1.4 #24mm coil
+	r1 = 1.915 #30mm coil
+	h1 = 2.1  #30mm coil
+	r_coilA = 5*r+2*h #radius for A coil in 24mm PCB added by PI
+	R_coilA =5*r1 + 2*h1 #radius for A coil in 30mm PCB added by PI
+	N = 2 #for quadrupole term added by PI
 	ic()
 	result = calc.integr(df)
 
-	sens, Sens = calc.qcoef(r, h)
+	sens, Sens, Sens_m = calc.qcoef(r1, h1) #changed by PI
 	comp, uncomp = result
+	#comp, uncomp, sens30, Sens, R_A, N, Sens_m
+	final_result = calc.compute(comp, uncomp, sens, Sens, R_coilA, N, Sens_m)#changed by PI
 
-	final_result = calc.compute(comp, uncomp, sens, Sens, r)
+	# final_result = ([0.929388278055756,
+	#                 0.6590640584585284,
+	#                 0.2945402188991307,
+	#                 0.058067133025310004,
+	#                 0.12105634855567009,
+	#                 0.03824844114583343,
+	#                 0.08602808574207428,
+	#                 0.2931304818815008,
+	#                 0.0261180827517812,
+	#                 0.03101563541907137,
+	#                 0.013883681157457802,
+	#                 0.0461090926649544,
+	#                 0.009065208892478673,
+	#                 0.0109488022551917],
+	#                -4.252044807925374,
+	#                -4.126526619249349,
+	#                -1.5392693567147941)
 	
-	final_axe = [n for n in range(3, 14)]
-
-	# final_result = [151016.21925893798,
-	# 		107957.02455120806,
-	# 		13319.513577364407,
-	# 		28529.136754847783,
-	# 		22212.989789243642,
-	# 		9470.351949227274,
-	# 		3639.282914142791,
-	# 		7193.843169766732,
-	# 		3796.862232406468,
-	# 		7588.863828055252,
-	# 		4392.052730045415,
-	# 		4396.068164598184,
-	# 		3930.9200617520723]
+	final_axis_y = final_result[0]
+	final_axis_x = [n for n in range(3, (len(final_axis_y)+3))]
+	ic(final_axis_y)
+	ic(final_axis_x)
 
 	sc = MplCanvas(width=5, height=4, dpi=100)
-	sc.axes.plot(final_axe, final_result)
+	sc.axes.plot(final_axis_x, final_axis_y)
 	harm.ui.hLayout_Graph.addWidget(sc)
-	harm.ui.txt_Result.setText("Harmonics:\n"+str(final_result))
-	# plt.plot(final_result)
-	# ic(final_result)
+	harm.ui.txt_Result.setText("Результат вычислений: \n"+str(final_result))
 
 def plot_data() -> None:
 	# plot data from analogue and digital channels 
@@ -513,10 +522,10 @@ def stop_record_data():
 	print("Data recording stopped")
 
 class MplCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        super(MplCanvas, self).__init__(fig)
+	def __init__(self, parent=None, width=5, height=4, dpi=100):
+		fig = Figure(figsize=(width, height), dpi=dpi)
+		self.axes = fig.add_subplot(111)
+		super(MplCanvas, self).__init__(fig)
 
 class window(QtWidgets.QMainWindow):
 	def __init__(self):
