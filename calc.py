@@ -1,4 +1,5 @@
-# программа принимает на вход массив данных, находит нулевые импульсы и отдельные угловые импульсы 
+# программа принимает на вход массив данных df,
+# находит нулевые импульсы и отдельные угловые импульсы 
 # проводит интегрирование по одному периоду и далее усреднение по нескольким периодам
 # вариант для использования в качестве модуля
 # применяется округление до 6 знаков
@@ -6,143 +7,144 @@
 import pandas as pd
 import numpy as np
 import math
+from tqdm import tqdm   # Progress bar
+from icecream import ic # Debug print
+import calc as calc             # Самоимпорт для совместимости кода
 
-from tqdm import tqdm
-from icecream import ic
-# time;ch_a;ch_c;D0;D4
-
-
-def integr(df_name):
+def integrate_dataframe(df_name) -> tuple:
     '''
     Функция вычисляет интеграл датафрейма
     roundN - порядок округления для ускорения расчетов.
     '''
-    roundN = 5 #округление величин измерений для ускорения отладки
-    timestamp = math.pow(10, -9)*df_name.timestamp
-    ch_A = df_name.ch_a
-    ch_C = 0.01*df_name.ch_c
-    tick = df_name.D0
+    
+    timestamp = df_name.timestamp 
+    ch_A = df_name.ch_a      # channel_A = ...
+    ch_C = 0.001009*df_name.ch_c # channel_C = ... для катушки с коэффициентом усиления 991
     zeroPulse = df_name.D4
+    
     
     ch_A_norm = []
     compSignalR = []
-    zeroed = []
-    tickPos = []
+   
     ic('DF has been read successfully')
     
+    # tick = dict([(i,d) for i,d in zip(df_name.index, df_name.D0)])
+    tick = df_name.D0.squeeze().to_dict()
+    zeroPos = []
+    tickPos = []
 
-   # ch_Af = []
-   # ch_Cf = []
-  #  for i in range(len(ch_A)):
-    #    ch_Af.append(useful.kalman(ch_A[i]))
-    #    ch_Cf.append(useful.kalman(ch_C[i]))
-    
-
-    #определяется фронт импульса 0 энкодера и позиция пишется в отдельный файл
-
+# Итерируемся только по тем индексам, где значения целевого показателя == 1
+#    for i in tqdm(df_name[df_name.D4 == 1].index):
+#        if (df_name.iloc[i].D4 == 0) & (df_name.iloc[i+1].D4 == 1):
+#             zeroPos.append(i+1)
+# Во втором условии применение функции iloc только замедляет, для этого сделали отдельный словарь для tick
+#    for j in tqdm(df_name[df_name.D0 == 1].index):
+#        if (tick[j] == 0) & (tick[j+1] == 1):
+#            tickPos.append(j+1)
 
     for i in tqdm(range(1, len(timestamp)), desc = 'Detecting zero pulses and ticks'):
         if (zeroPulse[i-1] == 0) & (zeroPulse[i] == 1):
-            zeroed.append(i)
-            
+            zeroPos.append(i)
         if (tick[i-1] == 0) & (tick[i] == 1):
             tickPos.append(i)
-        
+    
     ic('Zero pulses located')
-    ic('Period count is', len(zeroed))
-    ic(zeroed)
+    ic('Period count is', len(zeroPos))
         
-    periods = range(2, len(zeroed)-2)
+    periods = range(2, len(zeroPos)-2)
     if len(periods)<2:
         return
     allPeriodC = []
     allPeriodUc = []
     
     #вычисление постоянной составляющей
-    #переработать устранение постоянной составляющей
-    summaComp = 0
-    summaUncomp = 0
-     
-           
-    #comment here for bypass minus const
-    for k in tqdm(range(zeroed[0], (zeroed[-1]+1)), desc = 'Averaging signals'):
-        summaUncomp = summaUncomp + ch_A[k]
-        summaComp = summaComp + ch_C[k]
+    #TODO переработать устранение постоянной составляющей
+    summU = 0
+    summC = 0        
+    #? comment here for bypass minus const
+    for k in range(zeroPos[0], (zeroPos[-1]+1)):
+        summU += ch_A[k]
+        summC += ch_C[k]
     
-    constantComp = summaComp/ ((zeroed[-1]+1)-zeroed[0]) 
-    constantUncomp = summaUncomp/ ((zeroed[-1]+1)-zeroed[0])
+    constantComp = summC/ ((zeroPos[-1]+1)-zeroPos[0]) 
+    constantUncomp = summU/ ((zeroPos[-1]+1)-zeroPos[0])
     
-    for i in range(zeroed[0], (zeroed[-1]+1)):
-        ch_A_norm.append(round((ch_A[i] - constantUncomp), roundN))
-        compSignalR.append(round((ch_C[i] - constantComp), roundN))
+    for i in tqdm(range(zeroPos[0], (zeroPos[-1]+1)), desc = 'Averaging signals'):
+        ch_A_norm.append(ch_A[i] - constantUncomp)
+        compSignalR.append(ch_C[i] - constantComp)
 
     ic('periods, total', periods)
-    #allInt = []
-    #allIntU = []
+    posArr = []
 
+    # Интегрирование по каждому периоду отдельно
+    # TODO Stepan: лучше выделить в отдельную функцию
     for p in periods:
-        
         ic('Integral calculation for period', p)
-        step = timestamp[zeroed[p]+1] - timestamp[zeroed[p]]
-        integral = []
-        integralUc = []
+        dx = math.pow(10, -9) * (timestamp[zeroPos[p]+1] - timestamp[zeroPos[p]]) #перевод отметок времени из нс в с 
+        
+        intC = []
+        intU = []
         end, counter = 0, 0
-        start = zeroed[p]
-        finish = zeroed[p+1]
-
-        for pos in tickPos:
-            summaC = 0 #суммы для вычисления интеграла методом трапеций
-            summaU = 0
-            if (pos >= start) & (pos < finish):
-                counter +=1
-                
-                if counter == 160: #160 - 1 градус при разрешении 57600
-                    end = pos
-                
-                    for j in range(start+1, end):
-                        summaC = summaC + compSignalR[j]
-                        summaU = summaU + ch_A_norm[j]
-                                    
-
-                    integral.append(round(0.5*step*(compSignalR[start] + compSignalR[end] + 2*summaC), roundN))
-                    integralUc.append(round(0.5*step*(ch_A_norm[start] + ch_A_norm[end] + 2*summaU), roundN))
-
-
-                    counter = 0
-                
-            if end > (finish+1):
-                break
+        start = zeroPos[p]
+        finish = zeroPos[p+1]
         
+        
+        #поиск границ отдельных периодов для вычисления интеграла по ним
+        for i in range(len(tickPos)):
+            if ((tickPos[i] - start) < 18) & ((tickPos[i] - start) > 0):
+                startPos = i
+                
+            if ((finish - tickPos[i]) < 18) & ((finish - tickPos[i]) > 0):
+                finishPos = i
+
+        for pos in tickPos[startPos:finishPos+1]:
+            
+            sumC = 0 # суммы для вычисления интеграла методом трапеций
+            sumU = 0
+            counter +=1
+            if counter == 160:
+                curr_pos = pos 
+                posArr.append(curr_pos)
+                for int_counter in range(start, curr_pos+1):
+                    sumC += compSignalR[int_counter]
+                    sumU += ch_A_norm[int_counter]
+                # 160 - 1 градус при разрешении 57600
+                intC.append(sumC*dx)
+                intU.append(sumU*dx)
+                counter = 0
+                if curr_pos > finish:
+                    break
+
+        allPeriodC.append(intC)
+        allPeriodUc.append(intU)
+        
+    avgIntC = calc.integral_averaging(allPeriodC)
+    avgIntUc = calc.integral_averaging(allPeriodUc)
+       
+    return (avgIntC, avgIntUc, posArr) # Stepan: после служебной команды return надо ставить пробел,
+                               # чтобы не путать по синтаксису с вызовом функции.
+                               # Здесь в круглых скобках - не аргументы, а кортеж (tuple)
+
+def integral_averaging (allPeriod) -> tuple:
+  
+   #вычисление усредненного значения интегралов по нескольким периодам через транспонирование двухмерного списка			
+   #summaM = sum(compSignal[n] for n in range (zeroPos[3], zeroPos[4]))
+    
+    avgInt = []
+    arrInt = np.asarray(allPeriod)
+    aarrIntTransp = arrInt.transpose()
+    
+    for item in aarrIntTransp:
+        avgInt.append(sum(item)/len(arrInt))
    
-        allPeriodC.append(integral)
-        allPeriodUc.append(integralUc)
- 
-      
-    #вычисление усредненного значения интегралов по нескольким периодам через транспонирование двухмерного списка			
-    # summaM = sum(compSignal[n] for n in range (zeroed[3], zeroed[4]))
-    
-    arrC = np.asarray(allPeriodC)
-    arrUc = np.asarray(allPeriodUc)
-    
-    avgIntC = []
-    avgIntUc = []
-    
-    avgI_transp = arrC.transpose()
-    avgU_transp = arrUc.transpose()
-    for item in avgI_transp:
-        avgIntC.append(sum(item)/len(arrC))
-    for item in avgU_transp:
-        avgIntUc.append(sum(item)/len(arrUc))
-        
-    
-    return(avgIntC, avgIntUc)
-    
-def qcoef(r, h):
+    return (avgInt)
+
+def quadrupole_coefficient(r: float, h: float) -> tuple:
     '''
     Функция вычисляет чувствительность катушки с квадруполльной компенсацией и заданными параметрами r, h. 
     При этом дополнительно задается тип 
-    Sens - некомпенсированная чувствительность
-    sens - компенсированная чувствительность3
+    sensitivity_uncompensated - некомпенсированная чувствительность
+    sensitivity_compensated - компенсированная чувствительность
     r = 1.915 
     h = 2.1 #старая катушка 30 мм
 
@@ -167,23 +169,23 @@ def qcoef(r, h):
     roD = r6/r8
     
     N = 2
-    sens = []
+    sensitivity_compensated = []
     
     for n in range (3, depth+1):
         s_ED = 1 - math.pow(betaE, n) - math.pow(roD, n)*(1 - math.pow(betaD, n))
         s_BC = math.pow(roC, n)*(1 - math.pow(-1, n)) - math.pow(-1, n)*math.pow(roB, n)*(1 - math.pow(betaB, n))
-        sens.append(s_ED - s_BC)
-    Sens = (1 - math.pow(betaE, N))
-    Sens_minus = (1 - math.pow(betaE, N-1))
+        sensitivity_compensated.append(s_ED - s_BC)
+    sensitivity_uncompensated = (1 - math.pow(betaE, N))
+    sensitivity_uncomp_minus = (1 - math.pow(betaE, N-1))
     
-    return(sens, Sens, Sens_minus)
+    return (sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus)
 
-def scoef(r, h):
+def sextupole_coefficient(r: float, h: float) -> tuple:
     '''
     Функция вычисляет чувствительность катушки с секступольной компенсацией и заданными параметрами r, h. 
     При этом дополнительно задается тип 
-    Sens - некомпенсированная чувствительность
-    sens - компенсированная чувствительность3
+    sensitivity_uncompensated - некомпенсированная чувствительность
+    sensitivity_compensated - компенсированная чувствительность
     r = 1.915 
     h = 2.1 #старая катушка 30 мм
 
@@ -211,67 +213,58 @@ def scoef(r, h):
     muB = 1
     N = 3
     
-    sens = []
-    Sens = 0
+    sensitivity_compensated = []
+    sensitivity_uncompensated = 0
+
     for n in range (4, depth+1):
         s_ED = 1 - math.pow(betaE, n) - muD*math.pow(roD, n)*(1 - math.pow(betaD, n))
         s_BC = muC*math.pow(roC, n)*(1 - math.pow(-1, n)) - math.pow(-1, n)*math.pow(roB, n)*(1 - math.pow(betaB, n))
-        sens.append(s_ED + s_BC)
+        sensitivity_compensated.append(s_ED + s_BC)
         
+    sensitivity_uncompensated = (1 - math.pow(betaE, N))
+    sensitivity_uncomp_minus = (1 - math.pow(betaE, N-1))
+
+    return (sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus)
         
-    Sens = (1 - math.pow(betaE, N))
-    Sens_minus = (1 - math.pow(betaE, N-1))
-    return(sens, Sens, Sens_minus)
-        
-def compute(comp, uncomp, sens, Sens, R, N, Sens_minus):
-    step = math.pi/180
+def harmonic_calculation(integral_compensated_value, integral_uncompensated_value, sensitivity_compensated, sensitivity_uncompensated, R, N, sensitivity_uncomp_minus):
+    dx = math.pi/180
     M = 56
-    depth = 16	
-    LCn = []
+    depth = 16  # Хорошее имя переменной, но можно лучше
+    LCn = []    # Плохое имя переменной
     psi = []
     p = []
     q = []
     alpha = []
+    
     for n in range (3, depth+1):
         f_cos = []
         f_sin = []
-    
-        summa_c = 0
-        summa_s = 0
-        
+        sumC = 0
+        sumS = 0
         pee = 0
         quu = 0
-     #компенсированная чувствительность
+        #компенсированная чувствительность
         start = 0 #начальный угол
-        end = len(comp)
-        
-    
+        end = len(integral_compensated_value)
+          
         for teta in range(start, end):
         #подынтегральные выражения для расчета коэффициентов разложения в ряд Фурье
-            f_cos.append(comp[teta]*math.cos(n*teta*math.pi/180))
-            f_sin.append(comp[teta]*math.sin(n*teta*math.pi/180))#
+            f_cos.append(integral_compensated_value[teta]*math.cos(n*teta*math.pi/180))
+            f_sin.append(integral_compensated_value[teta]*math.sin(n*teta*math.pi/180))#
     
-        f_c_start = f_cos[start]
-        f_c_end = f_cos[end-1]
-        f_s_start = f_sin[start]
-        f_s_end = f_sin[end-1]
+        for s in range(start, end):
+            sumC += f_cos[s]
+            sumS += f_sin[s]
         
-        for s in range(start+1, end-1):
-            summa_c += f_cos[s]
-            summa_s += f_sin[s]
-        
-        pee = ((1/math.pi)*0.5*step*(f_c_start + f_c_end + 2*summa_c))
-        quu = ((1/math.pi)*0.5*step*(f_s_start + f_s_end + 2*summa_s))
+        pee = (1/math.pi)*sumC*dx
+        quu = (1/math.pi)*sumS*dx
             
-    # LCn.append(math.sqrt(math.pow(pee, 2) + math.pow(quu, 2))/(M*math.pow(r, n)*s))	
-        psi = -math.atan(quu/pee)
-        alpha.append(psi/n)
+        # LCn.append(math.sqrt(math.pow(pee, 2) + math.pow(quu, 2))/(M*math.pow(r, n)*s))	
+        #psi = -math.atan(quu/pee)
+        #alpha.append(psi/n)
         p.append(pee)
         q.append(quu)
-        
-    ic(p)
-    ic(q)
-    
+           
     # LBn.append(n*math.sqrt(math.pow(pee, 2) + math.pow(quu, 2))/(M*r*s))	
     
     LCN = []
@@ -279,53 +272,80 @@ def compute(comp, uncomp, sens, Sens, R, N, Sens_minus):
     P = []	
     Q = []
     
-# LBN = []
+    # LBN = []
     F_cos = []
     F_sin = []
     
-    summa_C = 0
-    summa_S = 0
+    sum_C = 0
+    sum_S = 0
     start = 0 #начальный угол
-    end = len(uncomp)
+    end = len(integral_uncompensated_value)
     
     for n in range(1, N+1):
         for teta in range(start, end):
         #подынтегральные выражения для расчета коэффициентов разложения в ряд Фурье
-            F_cos.append(uncomp[teta]*math.cos(n*teta*math.pi/180))
-            F_sin.append(uncomp[teta]*math.sin(n*teta*math.pi/180))#
+            F_cos.append(integral_uncompensated_value[teta]*math.cos(n*teta*math.pi/180))
+            F_sin.append(integral_uncompensated_value[teta]*math.sin(n*teta*math.pi/180))#
     
-        F_c_start = F_cos[start]
-        F_c_end = F_cos[end-1]
-        F_s_start = F_sin[start]
-        F_s_end = F_sin[end-1]
-        
+                
         for s in range(start+1, end-1):
-            summa_C += F_cos[s]
-            summa_S += F_sin[s]
+            sum_C += F_cos[s]
+            sum_S += F_sin[s]
         
-        P.append((1/math.pi)*0.5*step*(F_c_start + F_c_end + 2*summa_C))
-        Q.append((1/math.pi)*0.5*step*(F_s_start + F_s_end + 2*summa_S))
-    
-    
+        P.append((1/math.pi)*sum_C*dx)
+        Q.append((1/math.pi)*sum_S*dx)
+        
     # LCN.append(math.sqrt(math.pow(Pee, 2) + math.pow(Quu, 2))/(M*math.pow(r, n)*S))	
-    PSI = (-math.atan(Q[N-1]/P[N-1]))
-    Alpha = PSI*N
+    psy_angle = (-math.atan(Q[N-1] / P[N-1]))
+    source_rotation_angle_a = psy_angle * N # Угол поворота источника поля альфа
     # P.append(Pee)
     # Q.append(Quu)
-    #LBN = (N*math.sqrt(math.pow(P, 2) + math.pow(Q, 2))/(M*r*Sens))
+    #LBN = (N*math.sqrt(math.pow(P, 2) + math.pow(Q, 2))/(M*r*sensitivity_uncompensated))
 
-    B_otn = []
+    harmonics_relative_coeffs = []
     
-     
     #R = math.sqrt(math.pow(Pee, 2) + math.pow(Quu, 2))/math.sqrt(math.pow(p[1], 2) + math.pow(q[1], 2))
 
+    # формулы разбить на части и выделить в читаемые переменные значения типа math.sqrt(math.pow(P[N-1], 2)
     for n in range (3, 17):
-        
-        B_otn.append ((n*Sens*math.sqrt(math.pow(p[n-3], 2) + math.pow(q[n-3], 2)))/(N*sens[n-3]*math.sqrt(math.pow(P[N-1], 2) + math.pow(Q[N-1], 2))))
-        
+        harmonics_relative_coeffs.append((n * sensitivity_uncompensated * math.sqrt(math.pow(p[n-3], 2) + math.pow(q[n-3], 2))) / (N*sensitivity_compensated[n-3] * math.sqrt(math.pow(P[N-1], 2) + math.pow(Q[N-1], 2))))
+        ic(harmonics_relative_coeffs[n-3])
+    # формулы разбить на части и выделить в читаемые переменные значения типа math.sqrt(math.pow(P[N-1], 2)
+    deltaX = R * sensitivity_uncompensated * P[N-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[N-1], 2) + math.pow(Q[N-1], 2)))
+    deltaY = R * sensitivity_uncompensated * Q[N-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[N-1], 2) + math.pow(Q[N-1], 2)))
+
+    return (harmonics_relative_coeffs, deltaX, deltaY, source_rotation_angle_a)
 
 
-    deltaX = R*Sens*P[N-2]/(Sens_minus*N*math.sqrt(math.pow(P[N-1], 2) + math.pow(Q[N-1], 2)))
-    deltaY = R*Sens*Q[N-2]/(Sens_minus*N*math.sqrt(math.pow(P[N-1], 2) + math.pow(Q[N-1], 2)))
+if __name__ == "__main__":
+    '''
+    Стартовый код, в котором показан порядок вызова модуля calc, не стоит пока удалять
+    '''
+    # print("Reading data...")
+    df = pd.read_csv('data_2024-03-29_01.csv', delimiter=',') # Импорт данных для отладки модуля
 
-    return (B_otn, deltaX, deltaY, Alpha)
+    r24mm = 1.45  #24mm coil
+    h24mm = 1.4
+    r30mm = 1.915 #30mm coil
+    h30mm = 2.1
+    r24mm_coilA = 5*r24mm + 2*h24mm #radius for A coil in 24mm PCB
+    r30mm_coilA = 5*r30mm + 2*h30mm #radius for A coil in 30mm PCB
+    N = 2         #for quadrupole
+
+    integral_compensated_value, integral_uncompensated_value = calc.integrate_dataframe(df)
+
+    sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus = calc.quadrupole_coefficient(r30mm, h30mm) 
+
+    final_result = calc.harmonic_calculation(integral_compensated_value, integral_uncompensated_value, sensitivity_compensated, sensitivity_uncompensated, r30mm_coilA, N, sensitivity_uncomp_minus)
+    
+    # Генерация данных по осям графика
+    axis_y_harmonics_relative = final_result[0]
+    axis_x_harmonic_number = [n for n in range(3, (len(axis_y_harmonics_relative)+3))]
+
+    # Вписать график в окно программы
+    sc = MplCanvas(width=5, height=4, dpi=100)
+    sc.axes.plot(axis_x_harmonic_number, axis_y_harmonics_relative)
+    harm.ui.hLayout_Graph.addWidget(sc)
+
+    # Вывод данных в текстовое поле txt_Result
+    harm.ui.txt_Result.setText('Результат вычислений: \n'+str(final_result[0], '\n', str(final_result[1:])))
