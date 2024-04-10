@@ -1,0 +1,546 @@
+from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtCore import QLocale
+from PyQt5.QtGui import QIcon, QDoubleValidator
+from PyQt5.uic import loadUi
+import sys
+
+# Подключение необходимых модулей для вращения мотора
+import serial
+import serial.tools.list_ports
+import minimalmodbus
+
+# Модули для осциллографа
+import ctypes
+from picosdk.ps5000a import ps5000a as ps
+from picosdk.functions import adc2mV, assert_pico_ok, mV2adc, splitMSODataFast
+
+class MainUI(QMainWindow):
+    def __init__(self):
+        super(MainUI, self).__init__()
+        loadUi("harm_ui.ui", self)
+        self.setWindowIcon(QIcon("logo.png"))
+
+        # Массив данных
+        self.data = dict()
+
+        # ---------- Picoscope 5442D ----------
+        # global sampleRates, timeBase, interval, channels, intervals, resolution
+        self.resolutions = ["14", "15", "16"]
+        self.resolution = 14
+        self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V"]  #, "50 V"] 50V не работает
+        self.channels = [0, 0, 0, 0, 0]
+        self.intervals_14bit_15bit = {"104": 15, "200": 27, "504": 65, "1000": 127, "2000": 252}
+        self.intervals_16bit = {"112": 10, "208": 16, "512": 35, "1008": 66, "2000": 128}
+        self.sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
+        self.sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
+
+        # ---------- Motor variables ----------
+        self.rotatingTime = 0
+        # Modbus-адрес драйвера по умолчанию - 16
+        self.SERVO_MB_ADDRESS = 16
+        self.motorSpeed = 120   # rpm
+        self.motorAcc = 20      # ms
+        self.motorDec = 20      # ms
+        self.motorState = 0
+        self.motorTurns = 10
+
+        # Создание объектов chandle, status
+        self.chandle = ctypes.c_int16()
+        self.status = {}
+        self.servo = 0
+        
+        # ---------- Serial ----------
+        portList = serial.tools.list_ports.comports(include_links=False)
+        self.comPorts = []
+        for item in portList:
+            self.comPorts.append(item.device)
+        message = "Доступные COM-порты: " + str(self.comPorts)
+        print(message)
+        self.statusbar.showMessage(message)
+
+        for port in self.comPorts:
+            self.cBox_SerialPort_1.addItem(port)
+            self.cBox_SerialPort_2.addItem(port)
+
+        # Stepping motor initialization
+        self.pBtn_Connect_1.clicked.connect(self.init_motor)
+        self.pBtn_Connect_2.clicked.connect(self.init_motor)
+
+        # Motor control
+        self.pBtn_Rotation.clicked.connect(self.rotate_motor_continious)
+        self.pBtn_Stop.clicked.connect(self.stop_rotation)
+
+        # Инит параметров Pico
+        self.cBox_Resolution.addItems(self.resolutions)
+        self.cBox_Ch1Range.addItems(self.ranges)
+        self.cBox_Ch1Range.setCurrentText('500 mV')
+        self.cBox_Ch2Range.addItems(self.ranges)
+        self.cBox_Ch3Range.addItems(self.ranges)
+        self.cBox_Ch3Range.setCurrentText('10 V')
+        self.cBox_Ch4Range.addItems(self.ranges)
+        self.lbl_SampleRate.setText(self.sampleRates_14bit_15bit[0])
+
+        # Расчёт времени вращения мотора
+        # self.lEd_Speed.editingFinished.connect(calcTime)
+        # self.lEd_Turns.editingFinished.connect(calcTime)
+
+        # Расчёт значений осциллографа Picoscope
+        self.cBox_Resolution.currentIndexChanged.connect(self.updateInterval)
+        self.cBox_Interval.currentIndexChanged.connect(self.calcTimeBase)
+
+        # Checkbox changed
+        self.chkBox_Ch1Enable.stateChanged.connect(self.resolutionUpdate)
+        self.chkBox_Ch2Enable.stateChanged.connect(self.resolutionUpdate)
+        self.chkBox_Ch3Enable.stateChanged.connect(self.resolutionUpdate)
+        self.chkBox_Ch4Enable.stateChanged.connect(self.resolutionUpdate)
+        
+        # Порог logiclevel для цифровых каналов
+        self.lEd_ChDigRange.setText('4.9')
+        self.lEd_ChDigRange.editingFinished.connect(self.chDigRange_validate)
+        self.hSld_ChDigRange.valueChanged.connect(lambda: self.lEd_ChDigRange.setText(str(self.hSld_ChDigRange.value()/10)))
+       
+    def chDigRange_validate(self):
+        s = self.lEd_ChDigRange.text()
+        s = s.replace(',', '.') if ',' in s else s
+        try:
+            range = float(s)
+        except ValueError:
+            range = 0.0
+        if range < 0:
+            range = 0.0
+        elif range > 5.0:
+            range = 5.0
+        self.lEd_ChDigRange.setText(str(range))
+        self.hSld_ChDigRange.setValue(int(range*10))
+
+    def init_motor(self) -> None:
+        ''' -- Initialize motor coil --'''
+        try:
+            # Настройка порта: скорость - 9600 бод/с, четность - нет, кол-во стоп-бит - 2.
+            self.servo = minimalmodbus.Instrument(self.cBox_SerialPort_1.currentText(), self.SERVO_MB_ADDRESS)
+            self.servo.serial.baudrate = 9600
+            self.servo.serial.parity = serial.PARITY_NONE
+            self.servo.serial.stopbits = 2
+            # Команда включения серво; 0x0405 - адрес параметра; 0x83 - значение параметра
+            self.servo.write_register(0x0405, 0x83, functioncode=6)
+            self.lbl_ServoStatus_2.setText("Подключен")
+            message = "Сервомотор подключен"
+            print(message)
+            self.statusbar.showMessage(message)
+        except:
+            self.lbl_ServoStatus_2.setText("Не подключен")
+            message = "Сервомотор не виден"
+            print(message)
+            self.statusbar.showMessage(message)
+
+    def rotate_motor_continious(self) -> None:
+        ''' -- Continious coil rotation --'''
+        message = "Старт вращения"
+        print(message)
+        self.statusbar.showMessage(message)
+        try:
+            self.motorSpeed = int(self.lEd_Speed.text())
+            self.motorAcc = int(self.lEd_Acceleration.text())
+            self.motorDec = int(self.lEd_Deceleration.text())
+            self.motorTurns = int(self.lEd_Turns.text())
+            # Формирование массива параметров для команды:
+            # 0x0002 - режим управления скоростью, записывается по адресу 0x6200
+            # 0x0000 - верхние два байта кол-ва оборотов (=0 для режима управления скоростью), записывается по адресу 0x6201
+            # 0x0000 - нижние два байта кол-ва оборотов  (=0 для режима управления скоростью), записывается по адресу 0x6202
+            # 0x03E8 - значение скорости вращения (1000 об/мин), записывается по адресу 0x6203
+            # 0x0064 - значение времени ускорения (100 мс), записывается по адресу 0x6204
+            # 0x0064 - значение времени торможения (100 мс), записывается по адресу 0x6205
+            # 0x0000 - задержка перед началом движения (0 мс), записывается по адресу 0x6206
+            # 0x0010 - значение триггера для начала движения, записывается по адресу 0x6207
+            data = [0x0002, 0x0000, 0x0000, self.motorSpeed, self.motorAcc, self.motorDec, 0x0000, 0x0010]
+            self.servo.write_registers(0x6200, data)
+            message = "вращение..."
+            print(message)
+            self.statusbar.showMessage(message)
+        except (NameError, AttributeError):
+            message = "Сервомотор не виден"
+            print(message)
+            self.statusbar.showMessage(message)
+
+    def rotate_motor_absolute(self) -> None:
+        ''' -- Continious coil rotation --'''
+        message = "Старт вращения"
+        print(message)
+        self.statusbar.showMessage(message)
+        try:
+            # Формирование массива параметров для команды:
+            # 0x0001 - Motion Mode, Absolute position mode, по адресу 0x6200
+            # 0x0001 - Hexadecimal data of position=100000 pulse. All positions in PR mode are in units of 10000P/r, верхние два байта кол-ва оборотов (=0 для режима управления скоростью), записывается по адресу 0x6201
+            # 0x86A0 - 00 01 86 A0 represents 10 turns of motor rotation - нижние два байта кол-ва оборотов  (=0 для режима управления скоростью), записывается по адресу 0x6202
+            # 0x01F4 - Hexadecimal data of Speed=500r/min, записывается по адресу 0x6203
+            # 0x0064 - значение времени ускорения (100 мс), записывается по адресу 0x6204
+            # 0x0064 - значение времени торможения (100 мс), записывается по адресу 0x6205
+            # 0x0000 - задержка перед началом движения (0 мс), записывается по адресу 0x6206
+            # 0x0010 - значение триггера для начала движения, записывается по адресу 0x6207
+            data = [0x0001, 0x0001, 0x86A0, 0x01F4, 0x0064, 0x0064, 0x0000, 0x0010]
+            self.servo.write_registers(0x6200, data)
+            message = "вращение 10 оборотов"
+            print(message)
+            self.statusbar.showMessage(message)
+        except (NameError, AttributeError):
+            message = "Сервомотор не виден"
+            print(message)
+            self.statusbar.showMessage(message)
+
+    def rotate_motor_relative(self) -> None:
+        ''' -- Continious coil rotation --'''
+        message = "Старт вращения"
+        print(message)
+        self.statusbar.showMessage(message)
+        try:
+            # Формирование массива параметров для команды:
+            # 0x0041 - Motion Mode, Relative position mode, по адресу 0x6200
+            # 0x0000 - Hexadecimal data of position=10000 pulse. All positions in PR mode are in units of 10000P/r, верхние два байта кол-ва оборотов (=0 для режима управления скоростью), записывается по адресу 0x6201
+            # 0x2710 - 00 01 86 A0 represents 10 turns of motor rotation - нижние два байта кол-ва оборотов  (=0 для режима управления скоростью), записывается по адресу 0x6202
+            # 0x0258 - Hexadecimal data of Speed=600rpm, записывается по адресу 0x6203
+            # 0x0032 - значение времени ускорения (50ms/1000rpm), записывается по адресу 0x6204
+            # 0x0032 - значение времени торможения (50ms/1000rpm), записывается по адресу 0x6205
+            # 0x0000 - задержка перед началом движения (0 мс), записывается по адресу 0x6206
+            # 0x0010 - значение триггера для начала движения, записывается по адресу 0x6207
+            data = [0x0001, 0x0001, 0x86A0, 0x01F4, 0x0064, 0x0064, 0x0000, 0x0010]
+            self.servo.write_registers(0x6200, data)
+            message = "вращение 10 оборотов"
+            print(message)
+            self.statusbar.showMessage(message)
+        except (NameError, AttributeError):
+            message = "Сервомотор не виден"
+            print(message)
+            self.statusbar.showMessage(message)
+
+    def stop_rotation(self) -> None:
+        ''' -- Стоп вращения катушки --'''
+        try:
+            self.servo.write_register(0x6002, 0x40, functioncode=6)
+            message = "Стоп вращения"
+            print(message)
+            self.statusbar.showMessage(message)
+        except (NameError, AttributeError):
+            message = "Сервомотор не виден"
+            print(message)
+            self.statusbar.showMessage(message)
+
+    def open_scope_unit(self) -> None:
+        match self.resolution:
+            case 14:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"]
+            case 15:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_15BIT"]
+            case 16:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_16BIT"]
+            
+        # Получение статуса и chandle для дальнейшего использования
+        self.status["openunit"] = ps.ps5000aOpenUnit(ctypes.byref(self.chandle), None, resolution_code)
+        try:
+            assert_pico_ok(self.status["openunit"])
+        except: # PicoNotOkError:
+            powerStatus = self.status["openunit"]
+            if powerStatus == 286:
+                self.status["changePowerSource"] = ps.ps5000aChangePowerSource(self.chandle, powerStatus)
+            elif powerStatus == 282:
+                self.status["changePowerSource"] = ps.ps5000aChangePowerSource(self.chandle, powerStatus)
+            else:
+                raise assert_pico_ok(self.status["changePowerSource"])
+    
+    def resolutionUpdate(self) -> None:
+        ''' Выбор битности разрешения в зависимости от количества используемых каналов '''
+        self.channels[0] = self.chkBox_Ch1Enable.checkState()
+        self.channels[1] = self.chkBox_Ch2Enable.checkState()
+        self.channels[2] = self.chkBox_Ch3Enable.checkState()
+        self.channels[3] = self.chkBox_Ch4Enable.checkState()
+        self.channels[4] = self.chkBox_ChDigEnable.checkState()
+        match self.channels[:4].count(2):
+            case 4 | 3:
+                self.cBox_Resolution.clear()
+                self.cBox_Resolution.addItems(['14'])
+            case 2:
+                self.cBox_Resolution.clear()
+                self.cBox_Resolution.addItems(['14', '15'])
+                self.cBox_Resolution.setCurrentText('15')
+            case 1:
+                self.cBox_Resolution.clear()
+                self.cBox_Resolution.addItems(['14', '15', '16'])
+                self.cBox_Resolution.setCurrentText('16')
+            case 0:
+                self.cBox_Resolution.clear()
+
+    def updateInterval(self) -> None:
+        self.resolution = 0
+        if self.cBox_Resolution.count() != 0:
+            self.resolution = int(self.cBox_Resolution.currentText())
+            if self.resolution in [14, 15]:
+                self.cBox_Interval.clear()
+                self.cBox_Interval.addItems(self.intervals_14bit_15bit)
+                self.cBox_Interval.setCurrentText('504')
+            elif self.resolution == 16:
+                self.cBox_Interval.clear()
+                self.cBox_Interval.addItems(self.intervals_16bit)
+                self.cBox_Interval.setCurrentText('512')
+            self.interval = self.cBox_Interval.currentText()
+
+    def calcTimeBase(self) -> None:
+        if self.resolution in [14, 15]:
+            self.lbl_SampleRate.setText(self.sampleRates_14bit_15bit[self.cBox_Interval.currentIndex()])
+        elif self.resolution == 16:
+            self.lbl_SampleRate.setText(self.sampleRates_16bit[self.cBox_Interval.currentIndex()])
+        self.interval = self.cBox_Interval.currentText()
+
+    def channel_range(self, channel_checked) -> int:
+        match channel_checked.currentText():
+            case "10 mV": 	return ps.PS5000A_RANGE["PS5000A_10MV"]
+            case "20 mV": 	return ps.PS5000A_RANGE["PS5000A_20MV"]
+            case "50 mV": 	return ps.PS5000A_RANGE["PS5000A_50MV"]
+            case "100 mV": 	return ps.PS5000A_RANGE["PS5000A_100MV"]
+            case "200 mV": 	return ps.PS5000A_RANGE["PS5000A_200MV"]
+            case "500 mV": 	return ps.PS5000A_RANGE["PS5000A_500MV"]
+            case "1 V": 	return ps.PS5000A_RANGE["PS5000A_1V"]
+            case "2 V": 	return ps.PS5000A_RANGE["PS5000A_2V"]
+            case "5 V": 	return ps.PS5000A_RANGE["PS5000A_5V"]
+            case "10 V": 	return ps.PS5000A_RANGE["PS5000A_10V"]
+            case "20 V": 	return ps.PS5000A_RANGE["PS5000A_20V"]
+            case "50 V": 	return ps.PS5000A_RANGE["PS5000A_50V"]
+
+    def setup_analogue_channels(self) -> None:
+        ''' -- Настройка аналоговых каналов --'''
+        self.chRange = {}
+        coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+
+        # Настройка канала A
+        # handle = self.chandle
+        channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
+        # enabled == 1, disabled == 0
+        enabled = 1 if self.chkBox_Ch1Enable.isChecked() else 0
+        # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+        self.chRange["A"] = self.channel_range(self.cBox_Ch1Range)
+        # analogue offset = 0 V
+        self.status["setChA"] = ps.ps5000aSetChannel(self.chandle, channel, enabled, coupling_type, self.chRange["A"], 0)
+        assert_pico_ok(self.status["setChA"])
+        
+        # Настройка канала B
+        # handle = harm.chandle
+        channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
+        # enabled == 1, disabled == 0
+        enabled = 1 if self.chkBox_Ch2Enable.isChecked() else 0
+        # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+        self.chRange["B"] = self.channel_range(self.cBox_Ch2Range)
+        # analogue offset = 0 V
+        self.status["setChB"] = ps.ps5000aSetChannel(self.chandle, channel, enabled, coupling_type, self.chRange["B"], 0)
+        assert_pico_ok(self.status["setChB"])
+        
+        # Настройка канала C
+        # handle = harm.chandle
+        channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+        # enabled == 1, disabled == 0
+        enabled = 1 if self.chkBox_Ch3Enable.isChecked() else 0
+        # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+        self.chRange["C"] = self.channel_range(self.cBox_Ch3Range)
+        # analogue offset = 0 V
+        self.status["setChC"] = ps.ps5000aSetChannel(self.chandle, channel, enabled, coupling_type, self.chRange["C"], 0)
+        assert_pico_ok(self.status["setChC"])
+
+        # Настройка канала D
+        # handle = harm.chandle
+        channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
+        # enabled == 1, disabled == 0
+        enabled = 1 if self.chkBox_Ch4Enable.isChecked() else 0
+        # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
+        self.chRange["D"] = channel_range(self.cBox_Ch4Range)
+        # analogue offset = 0 V
+        self.status["setChD"] = ps.ps5000aSetChannel(self.chandle, channel, enabled, coupling_type, self.chRange["D"], 0)
+        assert_pico_ok(self.status["setChD"])
+
+    def setup_digital_channels(self) -> None:
+        ''' -- Настройка цифровых каналов --'''
+        # Set up digital port
+        # handle = self.chandle
+        # channel = ps5000a_DIGITAL_PORT0 = 0x80
+        digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
+        enabled = 1 if self.chkBox_ChDigEnable.isChecked() else 0
+        logicLevel = int(float(self.lEd_ChDigRange.text())*32767/5)
+        harm.status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(self.chandle, digital_port0, enabled, logicLevel)
+        assert_pico_ok(self.status["SetDigitalPort"])
+
+    def get_max_ADC_samples(self) -> None:
+        ''' Получение максимального количества сэмплов АЦП '''
+        self.maxADC = ctypes.c_int16()
+        self.status["maximumValue"] = ps.ps5000aMaximumValue(self.chandle, ctypes.byref(self.maxADC))
+        assert_pico_ok(self.status["maximumValue"])
+
+    def set_max_samples(self) -> None:
+        ''' Установка количества сэмплов до и после срабатывания триггера '''
+        self.preTriggerSamples = 0
+        self.postTriggerSamples = 10000000
+        self.maxSamples = self.preTriggerSamples + self.postTriggerSamples
+
+    def set_timebase(self) -> None:
+        # Установка частоты сэмплирования
+        if self.resolution in [14, 15]:
+            self.timebase = self.intervals_14bit_15bit[self.interval] # 65 == 504 нс
+        elif self.resolution == 16:
+            self.timebase = self.intervals_16bit[self.interval] # 25 == 512 нс
+        self.timeIntervalns = ctypes.c_float()
+        self.returnedMaxSamples = ctypes.c_int32()
+        self.status["getTimebase2"] = ps.ps5000aGetTimebase2(self.chandle, self.timebase, self.maxSamples, ctypes.byref(self.timeIntervalns), ctypes.byref(self.returnedMaxSamples), 0)
+        assert_pico_ok(self.status["getTimebase2"])
+
+    def start_record_data(self) -> None:
+        ''' -- Recording oscilloscope data --'''
+        # Подключение к осциллографу
+        self.open_scope_unit()
+        # Подключение каналов
+        self.setup_analogue_channels()
+        self.setup_digital_channels()
+
+        # Установка разрешения
+        self.get_max_ADC_samples()
+        self.set_max_samples()
+        self.set_timebase()
+        
+        message = "Starting data collection..."
+        print(message)
+        self.statusbar.showMessage(message)
+
+        # Запуск сбора данных
+        self.status["runBlock"] = ps.ps5000aRunBlock(self.chandle, self.preTriggerSamples, self.postTriggerSamples, self.timebase, None, 0, None, None)
+        assert_pico_ok(self.status["runBlock"])
+        
+        # Ожидание готовности данных
+        ready = ctypes.c_int16(0)
+        check = ctypes.c_int16(0)
+        while ready.value == check.value:
+            self.status["isReady"] = ps.ps5000aIsReady(self.chandle, ctypes.byref(ready))
+        
+        # Создание буферов данных
+        bufferAMax = (ctypes.c_int16 * self.maxSamples)()
+        bufferAMin = (ctypes.c_int16 * self.maxSamples)()
+        bufferBMax = (ctypes.c_int16 * self.maxSamples)()
+        bufferBMin = (ctypes.c_int16 * self.maxSamples)()
+        bufferCMax = (ctypes.c_int16 * self.maxSamples)()
+        bufferCMin = (ctypes.c_int16 * self.maxSamples)()
+        bufferDMax = (ctypes.c_int16 * self.maxSamples)()
+        bufferDMin = (ctypes.c_int16 * self.maxSamples)()
+
+        # Создание буферов для указателей сбора данных.
+        bufferDPort0Max = (ctypes.c_int16 * self.maxSamples)()
+        bufferDPort0Min = (ctypes.c_int16 * self.maxSamples)()
+        
+        if self.chkBox_Ch1Enable.isChecked():
+            # Указание буфера для сбора данных канала А
+            source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
+            self.status["setDataBuffersA"] = ps.ps5000aSetDataBuffers(self.chandle, source, ctypes.byref(bufferAMax), ctypes.byref(bufferAMin), self.maxSamples, 0, 0)
+            assert_pico_ok(self.status["setDataBuffersA"])
+        
+        if self.chkBox_Ch2Enable.isChecked():
+            # Указание буфера для сбора данных канала B
+            source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
+            self.status["setDataBuffersB"] = ps.ps5000aSetDataBuffers(self.chandle, source, ctypes.byref(bufferBMax), ctypes.byref(bufferBMin), self.maxSamples, 0, 0)
+            assert_pico_ok(self.status["setDataBuffersB"])
+
+        if self.chkBox_Ch3Enable.isChecked():
+            # Указание буфера для сбора данных канала C
+            source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
+            self.status["setDataBuffersC"] = ps.ps5000aSetDataBuffers(self.chandle, source, ctypes.byref(bufferCMax), ctypes.byref(bufferCMin), self.maxSamples, 0, 0)
+            assert_pico_ok(self.status["setDataBuffersC"])
+
+        if self.chkBox_Ch4Enable.isChecked():
+            # Указание буфера для сбора данных канала D
+            source = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
+            self.status["setDataBuffersD"] = ps.ps5000aSetDataBuffers(self.chandle, source, ctypes.byref(bufferDMax), ctypes.byref(bufferDMin), self.maxSamples, 0, 0)
+            assert_pico_ok(self.status["setDataBuffersD"])
+
+        if self.chkBox_ChDigEnable.isChecked():
+            # Указание буфера для сбора данных цифрового канала ps5000a_DIGITAL_PORT0
+            # handle = self.chandle
+            # source = ps.ps5000a_DIGITAL_PORT0 == 0x80
+            digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
+            # Buffer max = ctypes.byref(bufferDPort0Max)
+            # Buffer min = ctypes.byref(bufferDPort0Min)
+            # Buffer length = maxSamples
+            # Segment index = 0
+            # Ratio mode = ps5000a_RATIO_MODE_NONE = 0
+            self.status["SetDataBuffersDigital"] = ps.ps5000aSetDataBuffers(self.chandle, digital_port0, ctypes.byref(bufferDPort0Max), ctypes.byref(bufferDPort0Min), self.maxSamples, 0, 0)
+            assert_pico_ok(self.status["SetDataBuffersDigital"])
+
+        # Выделение памяти для переполнения
+        overflow = ctypes.c_int16()
+        
+        # Приведение типов
+        cmaxSamples = ctypes.c_int32(self.maxSamples)
+        
+        # Получение данных из осциллографа в созданные буферы
+        self.status["getValues"] = ps.ps5000aGetValues(self.chandle, 0, ctypes.byref(cmaxSamples), 0, 0, 0, ctypes.byref(overflow))
+        assert_pico_ok(self.status["getValues"])
+
+        message = "Сбор данных завершён."
+        print(message)
+        self.statusbar.showMessage(message)
+        self.stop_recording()
+        self.stop_rotation()
+
+        # Задаём шкалу времени
+        time_axis = np.linspace(0, (cmaxSamples.value - 1) * self.timeIntervalns.value, cmaxSamples.value)
+        self.data['timestamp'] = time_axis
+
+        # Преобразование отсчетов АЦП в мВ
+        if self.chkBox_Ch1Enable.isChecked():
+            adc2mVChAMax = adc2mV(bufferAMax, self.chRange["A"], self.maxADC)
+            self.data['ch_a'] = adc2mVChAMax
+        if self.chkBox_Ch2Enable.isChecked():
+            adc2mVChBMax = adc2mV(bufferBMax, self.chRange["B"], self.maxADC)
+            self.data['ch_b'] = adc2mVChBMax
+        if self.chkBox_Ch3Enable.isChecked():
+            adc2mVChCMax = adc2mV(bufferCMax, self.chRange["C"], self.maxADC)
+            self.data['ch_c'] = adc2mVChCMax
+        if self.chkBox_Ch4Enable.isChecked():
+            adc2mVChDMax = adc2mV(bufferDMax, self.chRange["D"], self.maxADC)
+            self.data['ch_d'] = adc2mVChDMax
+
+        # TODO: Добавить проверку на выход за пределы измерений
+
+        # Получение бинарных данных для Digital Port 0
+        # Возвращаемый кортеж содержит каналы в следующем порядке - (D7, D6, D5, D4, D3, D2, D1, D0).
+        bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
+        self.data['D0'] = bufferDPort0[7]
+        self.data['D4'] = bufferDPort0[5]
+
+        self.save_data2file()
+        
+    def save_data2file(self) -> None:
+        ''' -- Сохранение полученных данных на диск -- '''
+        df = pd.DataFrame(self.data)
+        df['D0'] = df['D0'].apply(int)
+        df['D4'] = df['D4'].apply(int)
+
+        message = "Запись в файл..."
+        print(message)
+        self.statusbar.showMessage(message)
+        df.to_csv("data_2024-04-10_100.csv")
+        message = "Сохранение данных закончено"
+        print(message)
+        self.statusbar.showMessage(message)
+
+    def stop_recording():
+        ''' -- Stop recording oscilloscope data -- '''
+        # Остановка осциллографа
+        self.status["stop"] = ps.ps5000aStop(self.chandle)
+        assert_pico_ok(self.status["stop"])
+        
+        # Закрытие и отключение осциллографа
+        self.status["close"]=ps.ps5000aCloseUnit(self.chandle)
+        assert_pico_ok(self.status["close"])
+        message = "Запись данных остановлена"
+        print(message)
+        self.statusbar.showMessage(message)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    # app = QApplication([])
+    harm = MainUI()
+    harm.show()
+    harm.resolutionUpdate()
+    harm.updateInterval()
+    harm.calcTimeBase()
+
+    app.exec_()
+    # sys.exit(app.exec_())
