@@ -411,7 +411,7 @@ class MainUI(QMainWindow):
         while ready.value == check.value:
             self.status["isReady"] = ps.ps5000aIsReady(self.chandle, ctypes.byref(ready))
         
-        # Создание буферов данных
+        # Создание буферов данных аналоговых каналов
         bufferAMax = (ctypes.c_int16 * self.maxSamples)()
         bufferAMin = (ctypes.c_int16 * self.maxSamples)()
         bufferBMax = (ctypes.c_int16 * self.maxSamples)()
@@ -421,7 +421,7 @@ class MainUI(QMainWindow):
         bufferDMax = (ctypes.c_int16 * self.maxSamples)()
         bufferDMin = (ctypes.c_int16 * self.maxSamples)()
 
-        # Создание буферов для указателей сбора данных.
+        # Создание буферов данных цифровых каналов
         bufferDPort0Max = (ctypes.c_int16 * self.maxSamples)()
         bufferDPort0Min = (ctypes.c_int16 * self.maxSamples)()
         
@@ -520,7 +520,7 @@ class MainUI(QMainWindow):
         print(message)
         self.statusbar.showMessage(message)
 
-    def stop_recording():
+    def stop_recording(self) -> None:
         ''' -- Stop recording oscilloscope data -- '''
         # Остановка осциллографа
         self.status["stop"] = ps.ps5000aStop(self.chandle)
@@ -532,6 +532,9 @@ class MainUI(QMainWindow):
         message = "Запись данных остановлена"
         print(message)
         self.statusbar.showMessage(message)
+
+    def validate_data_range(self) -> Bool:
+        pass
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
