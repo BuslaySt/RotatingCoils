@@ -40,11 +40,11 @@ class MainUI(QMainWindow):
         self.rotatingTime = 0
         # Modbus-адрес драйвера по умолчанию - 16
         self.SERVO_MB_ADDRESS = 16
-        self.motorSpeed = 120   # rpm
-        self.motorAcc = 20      # ms
-        self.motorDec = 20      # ms
-        self.motorState = 0
-        self.motorTurns = 10
+        self.motorSpeed = 120     # rpm не влияет
+        self.motorAcc = 1000      # ms  не влияет
+        self.motorDec = 1000      # ms  не влияет
+        self.motorState = 0       #     не влияет
+        self.motorTurns = 10      #     не влияет
 
         # Создание объектов chandle, status
         self.chandle = ctypes.c_int16()
@@ -75,7 +75,7 @@ class MainUI(QMainWindow):
         # Инит параметров Pico
         self.cBox_Resolution.addItems(self.resolutions)
         self.cBox_Ch1Range.addItems(self.ranges)
-        self.cBox_Ch1Range.setCurrentText('500 mV')
+        self.cBox_Ch1Range.setCurrentText('10 V')
         self.cBox_Ch2Range.addItems(self.ranges)
         self.cBox_Ch3Range.addItems(self.ranges)
         self.cBox_Ch3Range.setCurrentText('10 V')
@@ -501,6 +501,7 @@ class MainUI(QMainWindow):
             self.data['ch_d'] = adc2mVChDMax
 
         # TODO: Добавить проверку на выход за пределы измерений
+        print('Валидация -',self.validate_data_range())
 
         # Получение бинарных данных для Digital Port 0
         # Возвращаемый кортеж содержит каналы в следующем порядке - (D7, D6, D5, D4, D3, D2, D1, D0).
@@ -519,9 +520,13 @@ class MainUI(QMainWindow):
         message = "Запись в файл..."
         print(message)
         self.statusbar.showMessage(message)
-        filename = time.strftime("%yyyy-%m-%d_%H-%M")
-        print(filename)
-        df.to_csv("data_2024-04-12_001.csv")
+        
+        # filename = time.strftime("%Y-%m-%d_%H-%M")
+        # df.to_csv(f"data_{filename}.csv")
+        
+        print(df['ch_a'].max())
+        print(df['ch_c'].max())
+
         message = "Сохранение данных закончено"
         print(message)
         self.statusbar.showMessage(message)
@@ -539,8 +544,38 @@ class MainUI(QMainWindow):
         print(message)
         self.statusbar.showMessage(message)
 
+    def channel_maxrange(self, channel_checked) -> float:
+        ''' -- возвращает заданное максимальное значение диапазона канала --'''
+        match channel_checked.currentText():
+            case "10 mV": 	return 10
+            case "20 mV": 	return 20
+            case "50 mV": 	return 50
+            case "100 mV": 	return 100
+            case "200 mV": 	return 200
+            case "500 mV": 	return 500
+            case "1 V": 	return 1000
+            case "2 V": 	return 2000
+            case "5 V": 	return 5000
+            case "10 V": 	return 10000
+            case "20 V": 	return 20000
+            case "50 V": 	return 50000
+    
     def validate_data_range(self) -> bool:
-        pass
+        '''-- Проверка выхода измерений за предел канала --'''
+        df = pd.DataFrame(self.data)
+        if self.chkBox_Ch1Enable.isChecked():
+            if df['ch_a'].max() >= self.channel_maxrange(self.cBox_Ch1Range):
+                return ('a', df['ch_a'].max())
+        if self.chkBox_Ch2Enable.isChecked():
+            if df['ch_b'].max() >= self.channel_maxrange(self.cBox_Ch2Range):
+                return ('b', df['ch_b'].max())
+        if self.chkBox_Ch3Enable.isChecked():
+            if df['ch_c'].max() >= self.channel_maxrange(self.cBox_Ch3Range):
+                return ('c', df['ch_c'].max())
+        if self.chkBox_Ch4Enable.isChecked():
+            if df['ch_d'].max() >= self.channel_maxrange(self.cBox_Ch4Range):
+                return ('d', df['ch_d'].max())
+        return('ok')
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -550,7 +585,6 @@ if __name__ == '__main__':
     harm.resolutionUpdate()
     harm.updateInterval()
     harm.calcTimeBase()
-    print("init ok")
 
     app.exec_()
     # sys.exit(app.exec_())
