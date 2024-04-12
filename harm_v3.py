@@ -2,7 +2,9 @@ from PyQt5.QtWidgets import QMainWindow, QApplication
 from PyQt5.QtCore import QLocale
 from PyQt5.QtGui import QIcon, QDoubleValidator
 from PyQt5.uic import loadUi
-import sys
+import sys, time
+import pandas as pd
+import numpy as np
 
 # Подключение необходимых модулей для вращения мотора
 import serial
@@ -98,6 +100,8 @@ class MainUI(QMainWindow):
         self.lEd_ChDigRange.setText('4.9')
         self.lEd_ChDigRange.editingFinished.connect(self.chDigRange_validate)
         self.hSld_ChDigRange.valueChanged.connect(lambda: self.lEd_ChDigRange.setText(str(self.hSld_ChDigRange.value()/10)))
+
+        self.pBtn_Start.clicked.connect(self.start_record_data)
        
     def chDigRange_validate(self):
         s = self.lEd_ChDigRange.text()
@@ -345,7 +349,7 @@ class MainUI(QMainWindow):
         # enabled == 1, disabled == 0
         enabled = 1 if self.chkBox_Ch4Enable.isChecked() else 0
         # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
-        self.chRange["D"] = channel_range(self.cBox_Ch4Range)
+        self.chRange["D"] = self.channel_range(self.cBox_Ch4Range)
         # analogue offset = 0 V
         self.status["setChD"] = ps.ps5000aSetChannel(self.chandle, channel, enabled, coupling_type, self.chRange["D"], 0)
         assert_pico_ok(self.status["setChD"])
@@ -515,7 +519,9 @@ class MainUI(QMainWindow):
         message = "Запись в файл..."
         print(message)
         self.statusbar.showMessage(message)
-        df.to_csv("data_2024-04-10_100.csv")
+        filename = time.strftime("%yyyy-%m-%d_%H-%M")
+        print(filename)
+        df.to_csv("data_2024-04-12_001.csv")
         message = "Сохранение данных закончено"
         print(message)
         self.statusbar.showMessage(message)
@@ -533,7 +539,7 @@ class MainUI(QMainWindow):
         print(message)
         self.statusbar.showMessage(message)
 
-    def validate_data_range(self) -> Bool:
+    def validate_data_range(self) -> bool:
         pass
 
 if __name__ == '__main__':
@@ -544,6 +550,7 @@ if __name__ == '__main__':
     harm.resolutionUpdate()
     harm.updateInterval()
     harm.calcTimeBase()
+    print("init ok")
 
     app.exec_()
     # sys.exit(app.exec_())
