@@ -25,18 +25,19 @@ class MainUI(QMainWindow):
         # Массив данных
         self.data = dict()
 
-        # ---------- Picoscope 5442D ----------
-        # global sampleRates, timeBase, interval, channels, intervals, resolution
-        self.resolutions = ["14", "15", "16"]
+        ''' - переменные для Picoscope 5442D -'''
+        self.resolutions = ["14", "15", "16"] # битность
         self.resolution = 14
-        self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V"]  #, "50 V"] 50V не работает
+        self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V"]  # порог чувствительности , "50 V"] 50V не работает
         self.channels = [0, 0, 0, 0, 0]
+        # Интервалы сэмплирования
         self.intervals_14bit_15bit = {"104": 15, "200": 27, "504": 65, "1000": 127, "2000": 252}
         self.intervals_16bit = {"112": 10, "208": 16, "512": 35, "1008": 66, "2000": 128}
+        # Скорости сэмплирования
         self.sampleRates_14bit_15bit = ["9.62 МС/c", "5 МС/c", "1.98 МС/c", "1 МС/c", "500 кС/c"]
         self.sampleRates_16bit = ["8.93 МС/c", "4.81 МС/c", "1.95 МС/c", "992 кС/c", "500 кС/c"]
 
-        # ---------- Motor variables ----------
+        '''- переменные для мотора -'''
         self.rotatingTime = 0
         # Modbus-адрес драйвера по умолчанию - 16
         self.SERVO_MB_ADDRESS = 16
@@ -51,28 +52,28 @@ class MainUI(QMainWindow):
         self.status = {}
         self.servo = 0
         
-        # ---------- Serial ----------
+        # ---------- Serial ports ----------
         portList = serial.tools.list_ports.comports(include_links=False)
-        self.comPorts = []
+        comPorts = []
         for item in portList:
-            self.comPorts.append(item.device)
-        message = "Доступные COM-порты: " + str(self.comPorts)
+            comPorts.append(item.device)
+        message = "Доступные COM-порты: " + str(comPorts)
         print(message)
         self.statusbar.showMessage(message)
 
-        for port in self.comPorts:
+        for port in comPorts:
             self.cBox_SerialPort_1.addItem(port)
             self.cBox_SerialPort_2.addItem(port)
 
-        # Stepping motor initialization
+        # Кнопки инициализация шагового мотора
         self.pBtn_Connect_1.clicked.connect(self.init_motor)
         self.pBtn_Connect_2.clicked.connect(self.init_motor)
 
-        # Motor control
+        # Кнопки управления мотором
         self.pBtn_Rotation.clicked.connect(self.rotate_motor_continious)
         self.pBtn_Stop.clicked.connect(self.stop_rotation)
 
-        # Инит параметров Pico
+        # Инициализация параметров осциллографа Pico
         self.cBox_Resolution.addItems(self.resolutions)
         self.cBox_Ch1Range.addItems(self.ranges)
         self.cBox_Ch1Range.setCurrentText('10 V')
@@ -82,7 +83,7 @@ class MainUI(QMainWindow):
         self.cBox_Ch4Range.addItems(self.ranges)
         self.lbl_SampleRate.setText(self.sampleRates_14bit_15bit[0])
 
-        # Расчёт времени вращения мотора
+        # DEPRECATED Расчёт времени вращения мотора
         # self.lEd_Speed.editingFinished.connect(calcTime)
         # self.lEd_Turns.editingFinished.connect(calcTime)
 
@@ -90,18 +91,32 @@ class MainUI(QMainWindow):
         self.cBox_Resolution.currentIndexChanged.connect(self.updateInterval)
         self.cBox_Interval.currentIndexChanged.connect(self.calcTimeBase)
 
-        # Checkbox changed
+        # Проверка битности при включении каналов
         self.chkBox_Ch1Enable.stateChanged.connect(self.resolutionUpdate)
         self.chkBox_Ch2Enable.stateChanged.connect(self.resolutionUpdate)
         self.chkBox_Ch3Enable.stateChanged.connect(self.resolutionUpdate)
         self.chkBox_Ch4Enable.stateChanged.connect(self.resolutionUpdate)
         
-        # Порог logiclevel для цифровых каналов
-        self.lEd_ChDigRange.setText('4.9')
+        # Порог отсечки logiclevel для цифровых каналов
+        self.lEd_ChDigRange.setText('5.0')
         self.lEd_ChDigRange.editingFinished.connect(self.chDigRange_validate)
         self.hSld_ChDigRange.valueChanged.connect(lambda: self.lEd_ChDigRange.setText(str(self.hSld_ChDigRange.value()/10)))
 
+        # Запуск измерений кнопкой "Старт измерений"
         self.pBtn_Start.clicked.connect(self.start_record_data)
+
+        # Инициализация начальных значений осциллографа Picoscope
+        self.resolutionUpdate()
+        self.updateInterval()
+        self.calcTimeBase()
+
+
+        '''- Параметры вкладки инициализация -'''
+        magnetTypes = ['Квадруполь', 'Секступоль', 'Октуполь']
+        self.cBox_MagnetType.addItems(magnetTypes)
+
+        operatingModes = ['Режим 1', 'Режим 2', 'Режим 3', 'Режим 4']
+        self.cBox_OperatingModes.addItems(operatingModes)
        
     def chDigRange_validate(self):
         s = self.lEd_ChDigRange.text()
@@ -248,7 +263,7 @@ class MainUI(QMainWindow):
                 raise assert_pico_ok(self.status["changePowerSource"])
     
     def resolutionUpdate(self) -> None:
-        ''' Выбор битности разрешения в зависимости от количества используемых каналов '''
+        '''-- Выбор битности разрешения в зависимости от количества используемых каналов --'''
         self.channels[0] = self.chkBox_Ch1Enable.checkState()
         self.channels[1] = self.chkBox_Ch2Enable.checkState()
         self.channels[2] = self.chkBox_Ch3Enable.checkState()
@@ -270,6 +285,7 @@ class MainUI(QMainWindow):
                 self.cBox_Resolution.clear()
 
     def updateInterval(self) -> None:
+        '''-- Выбор интервала сэмплирования для выбранной битности --'''
         self.resolution = 0
         if self.cBox_Resolution.count() != 0:
             self.resolution = int(self.cBox_Resolution.currentText())
@@ -284,6 +300,7 @@ class MainUI(QMainWindow):
             self.interval = self.cBox_Interval.currentText()
 
     def calcTimeBase(self) -> None:
+        '''-- Расчёт скорости сэмплирования (сэмплов/сек) --'''
         if self.resolution in [14, 15]:
             self.lbl_SampleRate.setText(self.sampleRates_14bit_15bit[self.cBox_Interval.currentIndex()])
         elif self.resolution == 16:
@@ -560,7 +577,7 @@ class MainUI(QMainWindow):
             case "20 V": 	return 20000
             case "50 V": 	return 50000
     
-    def validate_data_range(self) -> bool:
+    def validate_data_range(self) -> dict:
         '''-- Проверка выхода измерений за предел канала --'''
         df = pd.DataFrame(self.data)
         if self.chkBox_Ch1Enable.isChecked():
@@ -582,9 +599,6 @@ if __name__ == '__main__':
     # app = QApplication([])
     harm = MainUI()
     harm.show()
-    harm.resolutionUpdate()
-    harm.updateInterval()
-    harm.calcTimeBase()
-
+    
     app.exec_()
     # sys.exit(app.exec_())
