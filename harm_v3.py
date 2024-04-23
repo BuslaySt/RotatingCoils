@@ -65,9 +65,12 @@ class MainUI(QMainWindow):
             self.cBox_SerialPort_1.addItem(port)
             self.cBox_SerialPort_2.addItem(port)
 
-        # Кнопки инициализация шагового мотора
+        # Кнопка Продолжить окна Инициализации
+        self.pBtn_Contunue.clicked.connect(self.init_continue)
+
+        # Кнопка инициализация шагового мотора
         self.pBtn_Connect_1.clicked.connect(self.init_motor)
-        self.pBtn_Connect_2.clicked.connect(self.init_motor)
+        # self.pBtn_Connect_2.clicked.connect(self.init_motor)
 
         # Кнопки управления мотором
         self.pBtn_Rotation.clicked.connect(self.rotate_motor_continious)
@@ -102,8 +105,12 @@ class MainUI(QMainWindow):
         self.lEd_ChDigRange.editingFinished.connect(self.chDigRange_validate)
         self.hSld_ChDigRange.valueChanged.connect(lambda: self.lEd_ChDigRange.setText(str(self.hSld_ChDigRange.value()/10)))
 
-        # Запуск измерений кнопкой "Старт измерений"
-        self.pBtn_Start.clicked.connect(self.start_record_data)
+        # Запуск измерений кнопками "Старт измерений"
+        self.pBtn_Start_1.clicked.connect(self.operating_mode1)
+        self.pBtn_Start_2.clicked.connect(self.operating_mode2)
+        self.pBtn_Start_3.clicked.connect(self.operating_mode3)
+        self.pBtn_Start_4.clicked.connect(self.operating_mode4)
+        
 
         # Инициализация начальных значений осциллографа Picoscope
         self.resolutionUpdate()
@@ -112,13 +119,71 @@ class MainUI(QMainWindow):
 
 
         '''- Параметры вкладки инициализация -'''
-        magnetTypes = ['Квадруполь', 'Секступоль', 'Октуполь']
+        magnetTypes = ['', 'Квадруполь', 'Секступоль', 'Октуполь']
         self.cBox_MagnetType.addItems(magnetTypes)
 
-        operatingModes = ['Режим 1', 'Режим 2', 'Режим 3', 'Режим 4']
+        operatingModes = ['', 'Режим 1', 'Режим 2', 'Режим 3', 'Режим 4']
         self.cBox_OperatingModes.addItems(operatingModes)
        
+    def init_continue(self) -> None:
+        if self.check_init():
+            self.select_tab()
+        else:
+            message = "Введите поля инициализации и выберите режим"
+            print(message)
+            self.statusbar.showMessage(message)
+
+    def check_init(self) -> bool:
+        '''- проверка заполнения полей инициализации -'''
+        if self.lEd_Name.text() and self.lEd_MagnetSerial.text() and self.cBox_MagnetType.currentText() and self.cBox_OperatingModes.currentText():
+            print(True)
+            return True
+        else:
+            print(False)
+            return False
+
+    def select_tab(self) -> None:
+        match self.cBox_OperatingModes.currentIndex():
+            case 1:
+                # self.tab_mode_1.setDisabled(False)
+                self.tabWidget.setTabEnabled(1, True)
+                self.tabWidget.setTabEnabled(2, False)
+                self.tabWidget.setTabEnabled(3, False)
+                self.tabWidget.setTabEnabled(4, False)
+                self.tabWidget.setCurrentIndex(1)
+            case 2:
+                self.tabWidget.setTabEnabled(1, False)
+                self.tabWidget.setTabEnabled(2, True)
+                self.tabWidget.setTabEnabled(3, False)
+                self.tabWidget.setTabEnabled(4, False)
+                self.tabWidget.setCurrentIndex(2)
+            case 3:
+                self.tabWidget.setTabEnabled(1, False)
+                self.tabWidget.setTabEnabled(2, False)
+                self.tabWidget.setTabEnabled(3, True)
+                self.tabWidget.setTabEnabled(4, False)
+                self.tabWidget.setCurrentIndex(3)
+            case 4:
+                self.tabWidget.setTabEnabled(1, False)
+                self.tabWidget.setTabEnabled(2, False)
+                self.tabWidget.setTabEnabled(3, False)
+                self.tabWidget.setTabEnabled(4, True)
+                self.tabWidget.setCurrentIndex(4)
+
+    def operating_mode1(self) -> None:
+        pass
+
+    def operating_mode2(self) -> None:
+        pass
+
+    def operating_mode3(self) -> None:
+        pass
+
+    def operating_mode4(self) -> None:
+        pass
+
     def chDigRange_validate(self):
+        '''- Валидация значения поля отсечки цифровых каналов -'''
         s = self.lEd_ChDigRange.text()
         s = s.replace(',', '.') if ',' in s else s
         try:
@@ -133,22 +198,26 @@ class MainUI(QMainWindow):
         self.hSld_ChDigRange.setValue(int(range*10))
 
     def init_motor(self) -> None:
-        ''' -- Initialize motor coil --'''
+        ''' -- Инициализация привода катушек --'''
+        self.pBtn_Contunue.setDisabled(False) #TODO после отладки удалить
         try:
-            # Настройка порта: скорость - 9600 бод/с, четность - нет, кол-во стоп-бит - 2.
             self.servo = minimalmodbus.Instrument(self.cBox_SerialPort_1.currentText(), self.SERVO_MB_ADDRESS)
+            # Настройка порта: скорость - 9600 бод/с, четность - нет, кол-во стоп-бит - 2.
             self.servo.serial.baudrate = 9600
             self.servo.serial.parity = serial.PARITY_NONE
             self.servo.serial.stopbits = 2
             # Команда включения серво; 0x0405 - адрес параметра; 0x83 - значение параметра
             self.servo.write_register(0x0405, 0x83, functioncode=6)
             self.lbl_ServoStatus_2.setText("Подключен")
-            message = "Сервомотор подключен"
+            message = "Привод подключен"
             print(message)
             self.statusbar.showMessage(message)
+            self.pBtn_Rotation.setDisabled(False)
+            self.pBtn_Stop.setDisabled(False)
+            self.pBtn_Contunue.setDisabled(False)
         except:
             self.lbl_ServoStatus_2.setText("Не подключен")
-            message = "Сервомотор не виден"
+            message = "Привод не виден"
             print(message)
             self.statusbar.showMessage(message)
 
@@ -177,7 +246,7 @@ class MainUI(QMainWindow):
             print(message)
             self.statusbar.showMessage(message)
         except (NameError, AttributeError):
-            message = "Сервомотор не виден"
+            message = "Привод не виден"
             print(message)
             self.statusbar.showMessage(message)
 
@@ -202,7 +271,7 @@ class MainUI(QMainWindow):
             print(message)
             self.statusbar.showMessage(message)
         except (NameError, AttributeError):
-            message = "Сервомотор не виден"
+            message = "Привод не виден"
             print(message)
             self.statusbar.showMessage(message)
 
@@ -227,7 +296,7 @@ class MainUI(QMainWindow):
             print(message)
             self.statusbar.showMessage(message)
         except (NameError, AttributeError):
-            message = "Сервомотор не виден"
+            message = "Привод не виден"
             print(message)
             self.statusbar.showMessage(message)
 
@@ -239,7 +308,7 @@ class MainUI(QMainWindow):
             print(message)
             self.statusbar.showMessage(message)
         except (NameError, AttributeError):
-            message = "Сервомотор не виден"
+            message = "Привод не виден"
             print(message)
             self.statusbar.showMessage(message)
 
@@ -406,7 +475,7 @@ class MainUI(QMainWindow):
         assert_pico_ok(self.status["getTimebase2"])
 
     def start_record_data(self) -> None:
-        ''' -- Recording oscilloscope data --'''
+        ''' -- Запись данных с осциллографа --'''
         # Подключение к осциллографу
         self.open_scope_unit()
         # Подключение каналов
@@ -418,7 +487,7 @@ class MainUI(QMainWindow):
         self.set_max_samples()
         self.set_timebase()
         
-        message = "Starting data collection..."
+        message = "Начат сбор данных..."
         print(message)
         self.statusbar.showMessage(message)
 
@@ -497,7 +566,6 @@ class MainUI(QMainWindow):
         print(message)
         self.statusbar.showMessage(message)
         self.stop_recording()
-        self.stop_rotation()
 
         # Задаём шкалу времени
         time_axis = np.linspace(0, (cmaxSamples.value - 1) * self.timeIntervalns.value, cmaxSamples.value)
@@ -518,7 +586,7 @@ class MainUI(QMainWindow):
             self.data['ch_d'] = adc2mVChDMax
 
         # TODO: Добавить проверку на выход за пределы измерений
-        print('Валидация -',self.validate_data_range())
+        print('Валидация -', self.validate_data_range())
 
         # Получение бинарных данных для Digital Port 0
         # Возвращаемый кортеж содержит каналы в следующем порядке - (D7, D6, D5, D4, D3, D2, D1, D0).
@@ -526,7 +594,7 @@ class MainUI(QMainWindow):
         self.data['D0'] = bufferDPort0[7]
         self.data['D4'] = bufferDPort0[5]
 
-        self.save_data2file()
+        # self.save_data2file()
         
     def save_data2file(self) -> None:
         ''' -- Сохранение полученных данных на диск -- '''
@@ -549,7 +617,7 @@ class MainUI(QMainWindow):
         self.statusbar.showMessage(message)
 
     def stop_recording(self) -> None:
-        ''' -- Stop recording oscilloscope data -- '''
+        ''' -- Остановка и отключение осциллографа -- '''
         # Остановка осциллографа
         self.status["stop"] = ps.ps5000aStop(self.chandle)
         assert_pico_ok(self.status["stop"])
