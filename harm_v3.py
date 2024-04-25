@@ -111,7 +111,6 @@ class MainUI(QMainWindow):
         self.pBtn_Start_3.clicked.connect(self.operating_mode3)
         self.pBtn_Start_4.clicked.connect(self.operating_mode4)
         
-
         # Инициализация начальных значений осциллографа Picoscope
         self.resolutionUpdate()
         self.updateInterval()
@@ -119,10 +118,12 @@ class MainUI(QMainWindow):
 
 
         '''- Параметры вкладки инициализация -'''
-        magnetTypes = ['', 'Квадруполь', 'Секступоль', 'Октуполь']
+        self.lEd_Date.setText(time.strftime("%Y-%m-%d"))
+
+        magnetTypes = ['Квадруполь', 'Секступоль', 'Октуполь']
         self.cBox_MagnetType.addItems(magnetTypes)
 
-        operatingModes = ['', 'Режим 1', 'Режим 2', 'Режим 3', 'Режим 4']
+        operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. Измерения при изменении тока в обмотках', '4. Остаточные гармоники']
         self.cBox_OperatingModes.addItems(operatingModes)
        
     def init_continue(self) -> None:
@@ -136,34 +137,32 @@ class MainUI(QMainWindow):
     def check_init(self) -> bool:
         '''- проверка заполнения полей инициализации -'''
         if self.lEd_Name.text() and self.lEd_MagnetSerial.text() and self.cBox_MagnetType.currentText() and self.cBox_OperatingModes.currentText():
-            print(True)
             return True
         else:
-            print(False)
             return False
 
     def select_tab(self) -> None:
         match self.cBox_OperatingModes.currentIndex():
-            case 1:
+            case 0:
                 # self.tab_mode_1.setDisabled(False)
                 self.tabWidget.setTabEnabled(1, True)
                 self.tabWidget.setTabEnabled(2, False)
                 self.tabWidget.setTabEnabled(3, False)
                 self.tabWidget.setTabEnabled(4, False)
                 self.tabWidget.setCurrentIndex(1)
-            case 2:
+            case 1:
                 self.tabWidget.setTabEnabled(1, False)
                 self.tabWidget.setTabEnabled(2, True)
                 self.tabWidget.setTabEnabled(3, False)
                 self.tabWidget.setTabEnabled(4, False)
                 self.tabWidget.setCurrentIndex(2)
-            case 3:
+            case 2:
                 self.tabWidget.setTabEnabled(1, False)
                 self.tabWidget.setTabEnabled(2, False)
                 self.tabWidget.setTabEnabled(3, True)
                 self.tabWidget.setTabEnabled(4, False)
                 self.tabWidget.setCurrentIndex(3)
-            case 4:
+            case 3:
                 self.tabWidget.setTabEnabled(1, False)
                 self.tabWidget.setTabEnabled(2, False)
                 self.tabWidget.setTabEnabled(3, False)
