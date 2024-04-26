@@ -6,6 +6,9 @@ import sys, time
 import pandas as pd
 import numpy as np
 
+# модуль рассчёта интегральных характеристик
+import calc_v2_st as calc
+
 # Подключение необходимых модулей для вращения мотора
 import serial
 import serial.tools.list_ports
@@ -136,6 +139,7 @@ class MainUI(QMainWindow):
 
     def check_init(self) -> bool:
         '''- проверка заполнения полей инициализации -'''
+        return True
         if self.lEd_Name.text() and self.lEd_MagnetSerial.text() and self.cBox_MagnetType.currentText() and self.cBox_OperatingModes.currentText():
             return True
         else:
@@ -168,18 +172,6 @@ class MainUI(QMainWindow):
                 self.tabWidget.setTabEnabled(3, False)
                 self.tabWidget.setTabEnabled(4, True)
                 self.tabWidget.setCurrentIndex(4)
-
-    def operating_mode1(self) -> None:
-        pass
-
-    def operating_mode2(self) -> None:
-        pass
-
-    def operating_mode3(self) -> None:
-        pass
-
-    def operating_mode4(self) -> None:
-        pass
 
     def chDigRange_validate(self):
         '''- Валидация значения поля отсечки цифровых каналов -'''
@@ -475,6 +467,7 @@ class MainUI(QMainWindow):
 
     def start_record_data(self) -> None:
         ''' -- Запись данных с осциллографа --'''
+        self.data = dict()
         # Подключение к осциллографу
         self.open_scope_unit()
         # Подключение каналов
@@ -597,7 +590,7 @@ class MainUI(QMainWindow):
         
     def save_data2file(self) -> None:
         ''' -- Сохранение полученных данных на диск -- '''
-        df = pd.DataFrame(self.data)
+        df = pd.DataFrame(self.whole_data)
         df['D0'] = df['D0'].apply(int)
         df['D4'] = df['D4'].apply(int)
 
@@ -605,11 +598,11 @@ class MainUI(QMainWindow):
         print(message)
         self.statusbar.showMessage(message)
         
-        # filename = time.strftime("%Y-%m-%d_%H-%M")
-        # df.to_csv(f"data_{filename}.csv")
+        filename = time.strftime("%Y-%m-%d_%H-%M")
+        df.to_csv(f"data_{filename}.csv")
         
-        print(df['ch_a'].max())
-        print(df['ch_c'].max())
+        # print(df['ch_a'].max())
+        # print(df['ch_c'].max())
 
         message = "Сохранение данных закончено"
         print(message)
@@ -660,6 +653,25 @@ class MainUI(QMainWindow):
             if df['ch_d'].max() >= self.channel_maxrange(self.cBox_Ch4Range):
                 return ('d', df['ch_d'].max())
         return('ok')
+
+    def operating_mode1(self) -> None:
+        self.whole_data = list()
+        MeasurementsNumber = self.lEd_MeasurementsNumber_1.text()
+        TimeDelay = self.lEd_Pause_1.text()
+        for i in MeasurementsNumber:
+            self.start_record_data()
+            whole_data += self.data
+            time.sleep(TimeDelay)
+        self.save_data2file()
+
+    def operating_mode2(self) -> None:
+        pass
+
+    def operating_mode3(self) -> None:
+        pass
+
+    def operating_mode4(self) -> None:
+        pass
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
