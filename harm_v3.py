@@ -584,13 +584,13 @@ class MainUI(QMainWindow):
         # Возвращаемый кортеж содержит каналы в следующем порядке - (D7, D6, D5, D4, D3, D2, D1, D0).
         bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
         self.data['D0'] = bufferDPort0[7]
-        self.data['D4'] = bufferDPort0[5]
+        self.data['D4'] = bufferDPort0[3]
 
-        # self.save_data2file()
+        self.save_data2file()
         
     def save_data2file(self) -> None:
         ''' -- Сохранение полученных данных на диск -- '''
-        df = pd.DataFrame(self.whole_data)
+        df = pd.DataFrame(self.data)
         df['D0'] = df['D0'].apply(int)
         df['D4'] = df['D4'].apply(int)
 
@@ -655,14 +655,11 @@ class MainUI(QMainWindow):
         return('ok')
 
     def operating_mode1(self) -> None:
-        self.whole_data = list()
-        MeasurementsNumber = self.lEd_MeasurementsNumber_1.text()
-        TimeDelay = self.lEd_Pause_1.text()
-        for i in MeasurementsNumber:
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
+        TimeDelay = int(self.lEd_Pause_1.text())
+        for i in range(MeasurementsNumber):
             self.start_record_data()
-            whole_data += self.data
             time.sleep(TimeDelay)
-        self.save_data2file()
 
     def operating_mode2(self) -> None:
         pass
