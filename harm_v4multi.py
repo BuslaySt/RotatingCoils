@@ -5,6 +5,7 @@ from PyQt5.uic import loadUi
 import sys, time
 import pandas as pd
 import numpy as np
+import math
 
 # from multiprocessing import Process
 import threading
@@ -122,11 +123,10 @@ class MainUI(QMainWindow):
         self.updateInterval()
         self.calcTimeBase()
 
-
         '''- Параметры вкладки инициализация -'''
         self.lEd_Date.setText(time.strftime("%Y-%m-%d"))
 
-        magnetTypes = ['Квадруполь', 'Секступоль', 'Октуполь']
+        magnetTypes = ['Квадруполь-32', 'Квадруполь-25', 'Секступоль', 'Октуполь']
         self.cBox_MagnetType.addItems(magnetTypes)
 
         operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. Измерения при изменении тока в обмотках', '4. Остаточные гармоники']
@@ -142,13 +142,14 @@ class MainUI(QMainWindow):
 
     def check_init(self) -> bool:
         '''- проверка заполнения полей инициализации -'''
-        return True
+        return True   #TODO Заглушка, убрать
         if self.lEd_Name.text() and self.lEd_MagnetSerial.text() and self.cBox_MagnetType.currentText() and self.cBox_OperatingModes.currentText():
             return True
         else:
             return False
 
     def select_tab(self) -> None:
+        ''' Выбор вкладки рабочего режима съёмки ''' 
         match self.cBox_OperatingModes.currentIndex():
             case 0:
                 # self.tab_mode_1.setDisabled(False)
@@ -441,7 +442,7 @@ class MainUI(QMainWindow):
         # channel = ps5000a_DIGITAL_PORT0 = 0x80
         digital_port0 = ps.PS5000A_CHANNEL["PS5000A_DIGITAL_PORT0"]
         enabled = 1 if self.chkBox_ChDigEnable.isChecked() else 0
-        logicLevel = int(float(self.lEd_ChDigRange.text())*32767/5)
+        logicLevel = int(float(self.lEd_ChDigRange.text())*32767/5) #Отсечка цифрового канала
         harm.status["SetDigitalPort"] = ps.ps5000aSetDigitalPort(self.chandle, digital_port0, enabled, logicLevel)
         assert_pico_ok(self.status["SetDigitalPort"])
 
@@ -586,16 +587,35 @@ class MainUI(QMainWindow):
         # Получение бинарных данных для Digital Port 0
         # Возвращаемый кортеж содержит каналы в следующем порядке - (D7, D6, D5, D4, D3, D2, D1, D0).
         bufferDPort0 = splitMSODataFast(cmaxSamples, bufferDPort0Max)
+        # TODO: Уточнить соотвествие каналов
         self.data['D0'] = bufferDPort0[7]
-        self.data['D4'] = bufferDPort0[3]
+        self.data['D1'] = bufferDPort0[6]
+
+        df = pd.DataFrame(self.whole_data)
+        df['D0'] = df['D0'].apply(int)
+        df['D1'] = df['D1'].apply(int)
 
         # self.save_data2file()
+        return df
+
+    def stop_recording(self) -> None:
+        ''' -- Остановка и отключение осциллографа -- '''
+        # Остановка осциллографа
+        self.status["stop"] = ps.ps5000aStop(self.chandle)
+        assert_pico_ok(self.status["stop"])
         
+        # Закрытие и отключение осциллографа
+        self.status["close"]=ps.ps5000aCloseUnit(self.chandle)
+        assert_pico_ok(self.status["close"])
+        message = "Запись данных остановлена"
+        print(message)
+        self.statusbar.showMessage(message)
+
     def save_data2file(self) -> None:
         ''' -- Сохранение полученных данных на диск -- '''
         df = pd.DataFrame(self.whole_data)
         df['D0'] = df['D0'].apply(int)
-        df['D4'] = df['D4'].apply(int)
+        df['D1'] = df['D1'].apply(int)
 
         message = "Запись в файл..."
         print(message)
@@ -608,19 +628,6 @@ class MainUI(QMainWindow):
         # print(df['ch_c'].max())
 
         message = "Сохранение данных закончено"
-        print(message)
-        self.statusbar.showMessage(message)
-
-    def stop_recording(self) -> None:
-        ''' -- Остановка и отключение осциллографа -- '''
-        # Остановка осциллографа
-        self.status["stop"] = ps.ps5000aStop(self.chandle)
-        assert_pico_ok(self.status["stop"])
-        
-        # Закрытие и отключение осциллографа
-        self.status["close"]=ps.ps5000aCloseUnit(self.chandle)
-        assert_pico_ok(self.status["close"])
-        message = "Запись данных остановлена"
         print(message)
         self.statusbar.showMessage(message)
 
@@ -641,7 +648,7 @@ class MainUI(QMainWindow):
             case "50 V": 	return 50000
     
     def validate_data_range(self) -> dict:
-        '''-- Проверка выхода измерений за предел канала --'''
+        ''' TODO: -- Проверка выхода измерений за предел канала --'''
         df = pd.DataFrame(self.data)
         if self.chkBox_Ch1Enable.isChecked():
             if df['ch_a'].max() >= self.channel_maxrange(self.cBox_Ch1Range):
@@ -675,10 +682,49 @@ class MainUI(QMainWindow):
     def operate1(self) -> None:
         MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
         TimeDelay = int(self.lEd_Pause_1.text())
+        df_result = pd.DataFrame()
         for i in range(MeasurementsNumber):
-            # self.start_record_data()
+            # df = self.start_record_data()
+            result = self.calculate_result_raw()
+            df_result[i] = result[0]+result[1:]
             time.sleep(TimeDelay)
         self.pBtn_Start_1.setEnabled(True)
+        print(df_result)
+        df_result.info()
+        df_result.describe()
+
+    def calculate_result_raw(self) -> list:
+        print("Reading data...")
+        df = pd.read_csv('data_1.csv', delimiter=',') # Импорт данных для отладки модуля
+
+        quant = 1 #указание шага интегрирования (доли градуса)
+        time_coef = math.pow(10, -9) #перевод в секунды
+        coef_E = 0.000025641 # параметры усиления катушки, передаются исходя из выбранного типа катушки (таблицу с данными пришлю отдельно). 
+        coef_C = 0.000001009 # указанные коэффициенты - для квадрупольной катушки макетной шириной 30мм
+
+        # integral_compensated_value, integral_uncompensated_value = calc.integrate_dataframe(df)
+        result = calc.integrate_dataframe(df, coef_E, coef_C, quant, time_coef)
+
+        # r24mm = 1.45  #24mm coil
+        # h24mm = 1.4
+        # r30mm = 1.915 #30mm coil
+        # h30mm = 2.1
+
+        r = 1.915 # параметры катушки в мм
+        h = 2.1 # параметры катушки в мм
+        N = 2 # половинное количество полюсов магнита, 2 для квадруполя, 3 для секступоля и т.д.
+        magnet_length = 0.09 #длина магнита в м
+
+        R_A =(5*r + 2*h)/1000 #радиус внешней катушки в м
+        aperture_radius = 0.016 #радиус апертуры магнита (сейчас для квадруполя), тоже надо получать при инициализации из выбранного типа магнита, в м
+
+        comp, uncomp = result
+        sens30, Sens, sens_m = calc.quadrupole_coefficient(r, h)
+        # ФУНКЦИЯ ВЫЧИСЛЕНИЯ ВЕЛИЧИН
+        final_res = calc.harmonic_calculation(comp, uncomp, sens30, Sens, R_A, N, sens_m, quant, aperture_radius, magnet_length)
+        spectrum, deltaX, deltaY, alpha, H_avg = final_res
+
+        return final_res
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
