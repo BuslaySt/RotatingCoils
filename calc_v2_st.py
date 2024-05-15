@@ -9,7 +9,7 @@ import numpy as np
 import math
 from tqdm import tqdm   # Progress bar
 from icecream import ic # Debug print
-import __main__ as calc  # Самоимпорт для совместимости кода
+import calc_v2_st as calc  # Самоимпорт для совместимости кода
 import time
 
 
@@ -40,7 +40,7 @@ def integrate_dataframe(df_name, coef_E, coef_C, quant, time_coef) -> tuple:
 
     ic('Period count is', len(zeroPos))
     ic(zeroPos)    
-    periods = range(1, len(zeroPos)-3)
+    periods = range(4, len(zeroPos)-3)
     if len(periods)<2:
         return
     allPeriodC = []
@@ -136,7 +136,7 @@ def integrate_dataframe(df_name, coef_E, coef_C, quant, time_coef) -> tuple:
                                # чтобы не путать по синтаксису с вызовом функции.
                                # Здесь в круглых скобках - не аргументы, а кортеж (tuple)
 
-def integral_averaging (allPeriod) -> list:
+def integral_averaging(allPeriod) -> list:
   
     #вычисление усредненного значения интегралов по нескольким периодам через транспонирование двухмерного списка			
      
@@ -347,8 +347,8 @@ if __name__ == "__main__":
     Стартовый код, в котором показан порядок вызова модуля calc, не стоит пока удалять
     '''
     print("Reading data...")
-    df = pd.read_csv('data1.csv', delimiter=',') # Импорт данных для отладки модуля
-    
+    df = pd.read_csv('data_1.csv', delimiter=',') # Импорт данных для отладки модуля
+       
     quant = 1 #указание шага интегрирования (доли градуса)
     time_coef = math.pow(10, -9) #перевод в секунды
     coef_E = 0.000025641 # параметры усиления катушки, передаются исходя из выбранного типа катушки (таблицу с данными пришлю отдельно). 
