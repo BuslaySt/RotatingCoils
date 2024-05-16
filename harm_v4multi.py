@@ -11,7 +11,7 @@ import math
 import threading
 
 # модуль рассчёта интегральных характеристик
-import calc_v2_st as calc
+import calc_v4 as calc
 
 # Подключение необходимых модулей для вращения мотора
 import serial
