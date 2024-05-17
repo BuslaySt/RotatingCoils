@@ -17,7 +17,7 @@ from datetime import date
 
 #16 may 2024 version 3.0
 
-def integrate_dataframe(df_name: pd.DataFrame, coef_E, coef_C, quant, time_coef) -> tuple:
+def integrate_dataframe(df_name: pd.DataFrame, coef_E: float, coef_C: float, quant: float, time_coef: float) -> tuple:
     '''
     Функция вычисляет интеграл датафрейма
     roundN - порядок округления для ускорения расчетов.
@@ -138,9 +138,7 @@ def integrate_dataframe(df_name: pd.DataFrame, coef_E, coef_C, quant, time_coef)
     avgIntC = calc.integral_averaging(allPeriodC)
     avgIntUc = calc.integral_averaging(allPeriodUc)
        
-    return (avgIntC, avgIntUc) # Stepan: после служебной команды return надо ставить пробел,
-                               # чтобы не путать по синтаксису с вызовом функции.
-                               # Здесь в круглых скобках - не аргументы, а кортеж (tuple)
+    return avgIntC, avgIntUc
 
 def integral_averaging (allPeriod: list) -> tuple:
   
@@ -153,7 +151,7 @@ def integral_averaging (allPeriod: list) -> tuple:
     for item in aarrIntTransp:
         avgInt.append(sum(item)/len(arrInt))
    
-    return (avgInt)
+    return avgInt
 
 def quadrupole_coefficient(r: float, h: float) -> tuple:
     '''
@@ -194,7 +192,7 @@ def quadrupole_coefficient(r: float, h: float) -> tuple:
     sensitivity_uncompensated = (1 - math.pow(betaE, N))
     sensitivity_uncomp_minus = (1 - math.pow(betaE, N-1))
     
-    return (sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus)
+    return sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus
 
 def sextupole_coefficient(r: float, h: float) -> tuple:
     '''
@@ -240,7 +238,7 @@ def sextupole_coefficient(r: float, h: float) -> tuple:
     sensitivity_uncompensated = (1 - math.pow(betaE, N))
     sensitivity_uncomp_minus = (1 - math.pow(betaE, N-1))
 
-    return (sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus)
+    return sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus
 
 def octupole_coefficient(r: float, h: float) -> tuple:
     r1 = 0
@@ -281,10 +279,10 @@ def octupole_coefficient(r: float, h: float) -> tuple:
     
     sensitivity_uncompensated = (1 - math.pow(betaD, N))
 
-    return (sensitivity_compensated, sensitivity_uncompensated)
+    return sensitivity_compensated, sensitivity_uncompensated
     
 def harmonic_calculation(integral_compensated_value: list, integral_uncompensated_value: list, sensitivity_compensated, sensitivity_uncompensated,
-                         outer_coil_radius: int, N: int, sensitivity_uncomp_minus, quant: float, aperture_radius: float, magnet_length: float) -> list:
+                         outer_coil_radius: int, N: int, sensitivity_uncomp_minus, quant: float, aperture_radius: float, magnet_length: float) -> tuple:
     dx = math.pi/(quant*180)# шаг в градусах
     M = 56
     depth = 16  # Хорошее имя переменной, но можно лучше
@@ -377,10 +375,11 @@ def harmonic_calculation(integral_compensated_value: list, integral_uncompensate
     # формулы разбить на части и выделить в читаемые переменные значения типа math.sqrt(math.pow(P[N-1], 2)
     deltaX = outer_coil_radius * sensitivity_uncompensated * P[-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[-1], 2) + math.pow(Q[-1], 2)))
     deltaY = outer_coil_radius * sensitivity_uncompensated * Q[-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[-1], 2) + math.pow(Q[-1], 2)))
+    
+    ic(harmonics_relative_coeffs, deltaX, deltaY, source_rotation_angle_a, H_avg, P, Q)
+    return harmonics_relative_coeffs, deltaX, deltaY, source_rotation_angle_a, H_avg, P, Q
 
-    return (harmonics_relative_coeffs, deltaX, deltaY, source_rotation_angle_a, H_avg, P, Q)
-
-def run(df_name: pd.DataFrame, parameters: list) -> list:
+def run(df: pd.DataFrame, parameters: list) -> list:
     
     quant = parameters[0]
     r = parameters[1]
@@ -400,7 +399,7 @@ def run(df_name: pd.DataFrame, parameters: list) -> list:
     outer_coil_radius = (5*r + 2*h) # mm
 
 
-    df = pd.read_csv(df_name, sep = ',', low_memory = False)
+    # df = pd.read_csv(df_name, sep = ',', low_memory = False)
    
     df['timestamp'] = pd.to_numeric(df['timestamp'], errors = 'coerce')
     df['ch_a'] = pd.to_numeric(df['ch_a'], errors = 'coerce') 
