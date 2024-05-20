@@ -18,7 +18,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="iconSize">
        <size>
@@ -471,6 +471,16 @@
         </property>
         <property name="text">
          <string>Старт измерений</string>
+        </property>
+       </widget>
+       <widget class="QTableView" name="tblView">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>140</y>
+          <width>511</width>
+          <height>371</height>
+         </rect>
         </property>
        </widget>
       </widget>
