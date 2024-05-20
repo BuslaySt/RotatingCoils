@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication
-from PyQt5.QtCore import QLocale
+from PyQt5.QtCore import QLocale, Qt, QAbstractTableModel
 from PyQt5.QtGui import QIcon, QDoubleValidator
 from PyQt5.uic import loadUi
 import sys, time, pathlib, os
@@ -22,6 +22,22 @@ import minimalmodbus
 import ctypes
 from picosdk.ps5000a import ps5000a as ps
 from picosdk.functions import adc2mV, assert_pico_ok, mV2adc, splitMSODataFast
+
+class PandasTableModel(QAbstractTableModel):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+
+    def rowCount(self, parent=None):
+        return len(self.data)
+
+    def columnCount(self, parent=None):
+        return len(self.data.columns)
+
+    def data(self, index, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
+            return str(self.data.iloc[index.row(), index.column()])
+        return None
 
 class MainUI(QMainWindow):
     def __init__(self):
@@ -680,6 +696,7 @@ class MainUI(QMainWindow):
         pass
 
     def operate1(self) -> None:
+        '''
         MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
         TimeDelay = int(self.lEd_Pause_1.text())
         df_result = pd.DataFrame(index=["harm03", "harm04", "harm05", "harm06", "harm07", "harm08", "harm09", "harm10",
@@ -692,8 +709,17 @@ class MainUI(QMainWindow):
             time.sleep(TimeDelay)
 
         self.pBtn_Start_1.setEnabled(True)
+        df_result.rename(columns = {'Unnamed: 0':'name'}, inplace = True)
+        df_result["mean"] = df_result.iloc[:, 1:5].mean(axis=1)
+        df_result["stdev"] = df_result.iloc[:, 1:5].std(axis=1)
+        df_result["percent"] = (100*df_result.iloc[:, 1:5].std(axis=1)/df_result.iloc[:, 1:5].mean(axis=1)).round()
         print(df_result)
         df_result.to_csv("result.csv")
+        '''
+
+        df = pd.read_csv("result.csv")
+        model = PandasTableModel(df)
+        self.tblView.setModel(model)
 
     def calculate_result(self, df_name: pd.DataFrame) -> list:
         spectrum = []
