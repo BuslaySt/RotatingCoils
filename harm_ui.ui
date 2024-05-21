@@ -17,8 +17,17 @@
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <property name="iconSize">
        <size>
@@ -30,277 +39,299 @@
        <attribute name="title">
         <string>Инициализация</string>
        </attribute>
-       <widget class="QLabel" name="lbl_Name">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>20</y>
-          <width>81</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Оператор</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_Name">
-        <property name="geometry">
-         <rect>
-          <x>110</x>
-          <y>20</y>
-          <width>261</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="placeholderText">
-         <string>Фамилия Имя</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_Date">
-        <property name="geometry">
-         <rect>
-          <x>590</x>
-          <y>20</y>
-          <width>151</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="placeholderText">
-         <string>Дата</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Date">
-        <property name="geometry">
-         <rect>
-          <x>430</x>
-          <y>20</y>
-          <width>81</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Дата</string>
-        </property>
-       </widget>
-       <widget class="QComboBox" name="cBox_MagnetType">
-        <property name="geometry">
-         <rect>
-          <x>110</x>
-          <y>70</y>
-          <width>261</width>
-          <height>31</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_MagnetType">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>70</y>
-          <width>81</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Тип магнита</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_MagnetSerial">
-        <property name="geometry">
-         <rect>
-          <x>430</x>
-          <y>70</y>
-          <width>141</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Серийный номер магнита</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_MagnetSerial">
-        <property name="geometry">
-         <rect>
-          <x>590</x>
-          <y>70</y>
-          <width>151</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="placeholderText">
-         <string>Номер магнита</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Mode">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>120</y>
-          <width>81</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Режим работы</string>
-        </property>
-       </widget>
-       <widget class="QComboBox" name="cBox_OperatingModes">
-        <property name="geometry">
-         <rect>
-          <x>110</x>
-          <y>120</y>
-          <width>261</width>
-          <height>31</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Suffix">
-        <property name="geometry">
-         <rect>
-          <x>430</x>
-          <y>120</y>
-          <width>141</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Суффикс идентификатора</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_Suffix">
-        <property name="geometry">
-         <rect>
-          <x>590</x>
-          <y>120</y>
-          <width>151</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="placeholderText">
-         <string>суффикс</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Contunue">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>450</x>
-          <y>200</y>
-          <width>241</width>
-          <height>111</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Продолжить</string>
-        </property>
-       </widget>
-       <widget class="QComboBox" name="cBox_SerialPort_1">
-        <property name="geometry">
-         <rect>
-          <x>70</x>
-          <y>200</y>
-          <width>121</width>
-          <height>41</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Port_1">
-        <property name="geometry">
-         <rect>
-          <x>140</x>
-          <y>170</y>
-          <width>91</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>Arial</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Порт двигателя</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Connect_1">
-        <property name="geometry">
-         <rect>
-          <x>200</x>
-          <y>200</y>
-          <width>131</width>
-          <height>41</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Подключиться</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Rotation">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>70</x>
-          <y>280</y>
-          <width>121</width>
-          <height>41</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Старт вращения</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Stop">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>200</x>
-          <y>280</y>
-          <width>121</width>
-          <height>41</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Стоп вращения</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Port_3">
-        <property name="geometry">
-         <rect>
-          <x>120</x>
-          <y>250</y>
-          <width>141</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>Arial</family>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Управление двигателя</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_16">
+        <item>
+         <widget class="QFrame" name="frame_0_1">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <widget class="QPushButton" name="pBtn_Stop">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>190</x>
+             <y>270</y>
+             <width>131</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Стоп вращения</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pBtn_Rotation">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>60</x>
+             <y>270</y>
+             <width>121</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Старт вращения</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_Port_3">
+           <property name="geometry">
+            <rect>
+             <x>100</x>
+             <y>240</y>
+             <width>141</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Управление двигателя</string>
+           </property>
+          </widget>
+          <widget class="QComboBox" name="cBox_SerialPort_1">
+           <property name="geometry">
+            <rect>
+             <x>60</x>
+             <y>190</y>
+             <width>121</width>
+             <height>41</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pBtn_Connect_1">
+           <property name="geometry">
+            <rect>
+             <x>190</x>
+             <y>190</y>
+             <width>131</width>
+             <height>41</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Подключиться</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_Port_1">
+           <property name="geometry">
+            <rect>
+             <x>130</x>
+             <y>160</y>
+             <width>91</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial</family>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Порт двигателя</string>
+           </property>
+          </widget>
+          <widget class="QComboBox" name="cBox_OperatingModes">
+           <property name="geometry">
+            <rect>
+             <x>100</x>
+             <y>110</y>
+             <width>261</width>
+             <height>31</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QComboBox" name="cBox_MagnetType">
+           <property name="geometry">
+            <rect>
+             <x>100</x>
+             <y>60</y>
+             <width>261</width>
+             <height>31</height>
+            </rect>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_Mode">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>110</y>
+             <width>81</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Режим работы</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_Name">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>81</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Оператор</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lEd_Name">
+           <property name="geometry">
+            <rect>
+             <x>100</x>
+             <y>10</y>
+             <width>261</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="placeholderText">
+            <string>Фамилия Имя</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_MagnetType">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>60</y>
+             <width>81</width>
+             <height>21</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Тип магнита</string>
+           </property>
+          </widget>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame_0_2">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <widget class="QPushButton" name="pBtn_Contunue">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="geometry">
+            <rect>
+             <x>50</x>
+             <y>200</y>
+             <width>241</width>
+             <height>111</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Продолжить</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lEd_Suffix">
+           <property name="geometry">
+            <rect>
+             <x>170</x>
+             <y>110</y>
+             <width>151</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="placeholderText">
+            <string>суффикс</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lEd_MagnetSerial">
+           <property name="geometry">
+            <rect>
+             <x>170</x>
+             <y>60</y>
+             <width>151</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="placeholderText">
+            <string>Номер магнита</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_Date">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>81</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Дата</string>
+           </property>
+          </widget>
+          <widget class="QLineEdit" name="lEd_Date">
+           <property name="geometry">
+            <rect>
+             <x>170</x>
+             <y>10</y>
+             <width>151</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="placeholderText">
+            <string>Дата</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_MagnetSerial">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>60</y>
+             <width>141</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Серийный номер магнита</string>
+           </property>
+          </widget>
+          <widget class="QLabel" name="lbl_Suffix">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>110</y>
+             <width>141</width>
+             <height>31</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Суффикс идентификатора</string>
+           </property>
+          </widget>
+         </widget>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_mode_1">
        <property name="enabled">
@@ -309,84 +340,125 @@
        <attribute name="title">
         <string>Режим 1</string>
        </attribute>
-       <widget class="QLabel" name="lbl_Mode1Name">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>391</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Измерение при фиксированном поле </string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Start_1">
-        <property name="geometry">
-         <rect>
-          <x>370</x>
-          <y>50</y>
-          <width>151</width>
-          <height>71</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Старт измерений</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Pause1">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>50</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Пауза между запусками измерений</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_Pause_1">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>50</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_MeasurementsNumber_1">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>90</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_MeasurementsNumber1">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>90</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Количество измерений</string>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QLabel" name="lbl_Mode1Name">
+          <property name="text">
+           <string>Измерение при фиксированном поле </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame_1">
+          <property name="maximumSize">
+           <size>
+            <width>700</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_8">
+           <item>
+            <widget class="QFrame" name="frame_1_1">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_3">
+              <item>
+               <widget class="QFrame" name="frame_1_1_1">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_6">
+                 <item>
+                  <widget class="QLabel" name="lbl_Pause1">
+                   <property name="text">
+                    <string>Пауза между запусками измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_Pause_1">
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_1_1_2">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                 <item>
+                  <widget class="QLabel" name="lbl_MeasurementsNumber1">
+                   <property name="text">
+                    <string>Количество измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_MeasurementsNumber_1">
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Start_1">
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableView" name="tblView_Result_1"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_mode_2">
        <property name="enabled">
@@ -395,94 +467,143 @@
        <attribute name="title">
         <string>Режим 2</string>
        </attribute>
-       <widget class="QLabel" name="lbl_Mode2Name">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>391</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Оценка временной стабильности</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_Pause_2">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>49</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_MeasurementsNumber_2">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>90</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Количество измерений</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Pause_2">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>50</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Пауза между запусками измерений</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_MeasurementsNumber_2">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>90</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Start_2">
-        <property name="geometry">
-         <rect>
-          <x>370</x>
-          <y>50</y>
-          <width>151</width>
-          <height>71</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Старт измерений</string>
-        </property>
-       </widget>
-       <widget class="QTableView" name="tblView">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>140</y>
-          <width>511</width>
-          <height>371</height>
-         </rect>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLabel" name="lbl_Mode2Name">
+          <property name="text">
+           <string>Оценка временной стабильности</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame_2">
+          <property name="maximumSize">
+           <size>
+            <width>700</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <item>
+            <widget class="QFrame" name="frame_2_1">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout">
+              <item>
+               <widget class="QFrame" name="frame_2_1_1">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_3">
+                 <item>
+                  <widget class="QLabel" name="lbl_Pause_2">
+                   <property name="text">
+                    <string>Пауза между запусками измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_Pause_2">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_2_1_2">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_4">
+                 <item>
+                  <widget class="QLabel" name="lbl_MeasurementsNumber_2">
+                   <property name="text">
+                    <string>Количество измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_MeasurementsNumber_2">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Start_2">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableView" name="tblView_Result_2"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_mode_3">
        <property name="enabled">
@@ -491,84 +612,125 @@
        <attribute name="title">
         <string>Режим 3</string>
        </attribute>
-       <widget class="QLabel" name="lbl_Mode3Name">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>391</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Измерения при изменении тока в обмотках</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_MeasurementsNumber_3">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>90</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Количество измерений</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Pause_3">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>50</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Пауза между запусками измерений</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Start_3">
-        <property name="geometry">
-         <rect>
-          <x>370</x>
-          <y>50</y>
-          <width>151</width>
-          <height>71</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Старт измерений</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_MeasurementsNumber_3">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>90</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_Pause_3">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>49</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="QLabel" name="lbl_Mode3Name">
+          <property name="text">
+           <string>Измерения при изменении тока в обмотках</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame_3">
+          <property name="maximumSize">
+           <size>
+            <width>700</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_11">
+           <item>
+            <widget class="QFrame" name="frame_3_1">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_5">
+              <item>
+               <widget class="QFrame" name="frame_3_1_1">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_9">
+                 <item>
+                  <widget class="QLabel" name="lbl_Pause_3">
+                   <property name="text">
+                    <string>Пауза между запусками измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_Pause_3">
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_3_1_2">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_10">
+                 <item>
+                  <widget class="QLabel" name="lbl_MeasurementsNumber_3">
+                   <property name="text">
+                    <string>Количество измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_MeasurementsNumber_3">
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Start_3">
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableView" name="tblView_Result_3"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_mode_4">
        <property name="enabled">
@@ -577,84 +739,143 @@
        <attribute name="title">
         <string>Режим 4</string>
        </attribute>
-       <widget class="QLabel" name="lbl_Mode4Name">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>391</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Остаточные гармоники</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_MeasurementsNumber_4">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>90</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Количество измерений</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_Pause_4">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>49</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="pBtn_Start_4">
-        <property name="geometry">
-         <rect>
-          <x>370</x>
-          <y>50</y>
-          <width>151</width>
-          <height>71</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Старт измерений</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lbl_Pause_4">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>50</y>
-          <width>181</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Пауза между запусками измерений</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="lEd_MeasurementsNumber_4">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>90</y>
-          <width>113</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="placeholderText">
-         <string>1.45</string>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_8">
+        <item>
+         <widget class="QLabel" name="lbl_Mode4Name">
+          <property name="text">
+           <string>Остаточные гармоники</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame_4">
+          <property name="maximumSize">
+           <size>
+            <width>700</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_14">
+           <item>
+            <widget class="QFrame" name="frame_4_1">
+             <property name="maximumSize">
+              <size>
+               <width>500</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <item>
+               <widget class="QFrame" name="frame_4_1_1">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                 <item>
+                  <widget class="QLabel" name="lbl_Pause_4">
+                   <property name="maximumSize">
+                    <size>
+                     <width>300</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Пауза между запусками измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_Pause_4">
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_4_1_2">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_13">
+                 <item>
+                  <widget class="QLabel" name="lbl_MeasurementsNumber_4">
+                   <property name="maximumSize">
+                    <size>
+                     <width>300</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Количество измерений</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lEd_MeasurementsNumber_4">
+                   <property name="maximumSize">
+                    <size>
+                     <width>200</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="placeholderText">
+                    <string>1.45</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Start_4">
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>100</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTableView" name="tblView_Result_5"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_Setup">
        <property name="enabled">
