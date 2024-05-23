@@ -35,6 +35,7 @@ class PandasTableModel(QAbstractTableModel):
         return len(self.data.columns)
 
     def data(self, index, role=Qt.DisplayRole):
+        # print("Display role:", index.row(), index.column())
         if role == Qt.DisplayRole:
             return str(self.data.iloc[index.row(), index.column()])
         return None
@@ -129,10 +130,14 @@ class MainUI(QMainWindow):
         self.hSld_ChDigRange.valueChanged.connect(lambda: self.lEd_ChDigRange.setText(str(self.hSld_ChDigRange.value()/10)))
 
         # Запуск измерений кнопками "Старт измерений"
-        self.pBtn_Start_1.clicked.connect(self.operating_mode1)
-        self.pBtn_Start_2.clicked.connect(self.operating_mode2)
-        self.pBtn_Start_3.clicked.connect(self.operating_mode3)
-        self.pBtn_Start_4.clicked.connect(self.operating_mode4)
+        self.pBtn_Start_1.clicked.connect(self.operate1)
+        self.pBtn_Start_2.clicked.connect(self.operate2)
+        self.pBtn_Start_3.clicked.connect(self.operate3)
+        self.pBtn_Start_4.clicked.connect(self.operate4)
+        # self.pBtn_Start_1.clicked.connect(self.operating_mode1)
+        # self.pBtn_Start_2.clicked.connect(self.operating_mode2)
+        # self.pBtn_Start_3.clicked.connect(self.operating_mode3)
+        # self.pBtn_Start_4.clicked.connect(self.operating_mode4)
         
         # Инициализация начальных значений осциллографа Picoscope
         self.resolutionUpdate()
@@ -687,16 +692,26 @@ class MainUI(QMainWindow):
         # t1.join()
 
     def operating_mode2(self) -> None:
-        pass
+        self.pBtn_Start_2.setEnabled(False)
+        t2 = threading.Thread(target=self.operate2, args=(), daemon=True)
+        t2.start()
+        # t2.join()
 
     def operating_mode3(self) -> None:
-        pass
+        self.pBtn_Start_3.setEnabled(False)
+        t3 = threading.Thread(target=self.operate3, args=(), daemon=True)
+        t3.start()
+        # t3.join()
 
     def operating_mode4(self) -> None:
-        pass
+        self.pBtn_Start_4.setEnabled(False)
+        t4 = threading.Thread(target=self.operate4, args=(), daemon=True)
+        t4.start()
+        # t4.join()
 
     def operate1(self) -> None:
         '''
+        self.pBtn_Start_1.setEnabled(False)
         MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
         TimeDelay = int(self.lEd_Pause_1.text())
         df_result = pd.DataFrame(index=["harm03", "harm04", "harm05", "harm06", "harm07", "harm08", "harm09", "harm10",
@@ -716,12 +731,27 @@ class MainUI(QMainWindow):
         print(df_result)
         df_result.to_csv("result.csv")
         '''
-
         df = pd.read_csv("result.csv")
+        df.rename(columns = {'Unnamed: 0':'name'}, inplace = True)
+        df["mean"] = df.iloc[:, 1:5].mean(axis=1)
+        df["stdev"] = df.iloc[:, 1:5].std(axis=1)
+        df["percent"] = (100*df.iloc[:, 1:5].std(axis=1)/df.iloc[:, 1:5].mean(axis=1)).round()
+        df.drop(['0', '1', '2', '3', '4'], axis=1, inplace=True)
         model = PandasTableModel(df)
-        self.tblView.setModel(model)
+        self.tblView_Result_1.setModel(model)
+        self.pBtn_Start_1.setEnabled(True)
+
+    def operate2(self) -> None:
+        pass
+
+    def operate3(self) -> None:
+        pass
+
+    def operate4(self) -> None:
+        pass
 
     def calculate_result(self, df_name: pd.DataFrame) -> list:
+        '''-- Обсчёт данных с помощью модуля calc --'''
         spectrum = []
         deltaX = []
         deltaY = []
@@ -752,5 +782,6 @@ if __name__ == '__main__':
     harm = MainUI()
     harm.show()
     
-    app.exec_()
-    # sys.exit(app.exec_())
+    # app.exec_()
+    try: sys.exit(app.exec_())
+    except SystemExit: print("Closing Window...")
