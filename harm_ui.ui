@@ -443,12 +443,25 @@
             <widget class="QPushButton" name="pBtn_Start_1">
              <property name="minimumSize">
               <size>
-               <width>200</width>
-               <height>100</height>
+               <width>150</width>
+               <height>80</height>
               </size>
              </property>
              <property name="text">
               <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Save2File_1">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Запись в файл</string>
              </property>
             </widget>
            </item>
@@ -588,12 +601,25 @@
              </property>
              <property name="minimumSize">
               <size>
-               <width>200</width>
-               <height>100</height>
+               <width>150</width>
+               <height>80</height>
               </size>
              </property>
              <property name="text">
               <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Save2File_2">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Запись в файл</string>
              </property>
             </widget>
            </item>
@@ -715,12 +741,25 @@
             <widget class="QPushButton" name="pBtn_Start_3">
              <property name="minimumSize">
               <size>
-               <width>200</width>
-               <height>100</height>
+               <width>150</width>
+               <height>80</height>
               </size>
              </property>
              <property name="text">
               <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Save2File_3">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Запись в файл</string>
              </property>
             </widget>
            </item>
@@ -860,12 +899,25 @@
             <widget class="QPushButton" name="pBtn_Start_4">
              <property name="minimumSize">
               <size>
-               <width>200</width>
-               <height>100</height>
+               <width>150</width>
+               <height>80</height>
               </size>
              </property>
              <property name="text">
               <string>Старт измерений</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Save2File_4">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Запись в файл</string>
              </property>
             </widget>
            </item>
