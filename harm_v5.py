@@ -58,7 +58,7 @@ class PandasTableModel(QAbstractTableModel):
                 return self.vheaders[section]
 
 class MainUI(QMainWindow):
-    '''- Основной класс приложения -'''
+    '''--- Основной класс приложения ---'''
     def __init__(self):
         super(MainUI, self).__init__()
         loadUi("harm_ui.ui", self)
@@ -172,7 +172,9 @@ class MainUI(QMainWindow):
 
         operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. Измерения при изменении тока в обмотках', '4. Остаточные гармоники']
         self.cBox_OperatingModes.addItems(operatingModes)
-       
+
+    '''--- Кнопки управления и проверок ---'''
+
     def init_continue(self) -> None:
         if self.check_init():
             self.select_tab()
@@ -232,6 +234,8 @@ class MainUI(QMainWindow):
             range = 5.0
         self.lEd_ChDigRange.setText(str(range))
         self.hSld_ChDigRange.setValue(int(range*10))
+
+    '''--- Управление мотором ---'''
 
     def init_motor(self) -> None:
         ''' -- Инициализация привода катушек --'''
@@ -347,6 +351,8 @@ class MainUI(QMainWindow):
             message = "Привод не виден"
             print(message)
             self.statusbar.showMessage(message)
+
+    '''--- Управление АЦП ---'''
 
     def open_scope_unit(self) -> None:
         match self.resolution:
@@ -511,6 +517,24 @@ class MainUI(QMainWindow):
         self.status["getTimebase2"] = ps.ps5000aGetTimebase2(self.chandle, self.timebase, self.maxSamples, ctypes.byref(self.timeIntervalns), ctypes.byref(self.returnedMaxSamples), 0)
         assert_pico_ok(self.status["getTimebase2"])
 
+    def channel_maxrange(self, channel_checked) -> float:
+        ''' -- возвращает заданное максимальное значение диапазона канала --'''
+        match channel_checked.currentText():
+            case "10 mV": 	return 10
+            case "20 mV": 	return 20
+            case "50 mV": 	return 50
+            case "100 mV": 	return 100
+            case "200 mV": 	return 200
+            case "500 mV": 	return 500
+            case "1 V": 	return 1000
+            case "2 V": 	return 2000
+            case "5 V": 	return 5000
+            case "10 V": 	return 10000
+            case "20 V": 	return 20000
+            case "50 V": 	return 50000
+
+    '''--- Методы запуска мотора, получения и обработки данных ---'''
+
     def start_record_data(self) -> pd.DataFrame:
         ''' -- Запись данных с осциллографа --'''
         self.data = dict()
@@ -669,22 +693,6 @@ class MainUI(QMainWindow):
         message = "Сохранение данных закончено"
         print(message)
         self.statusbar.showMessage(message)
-
-    def channel_maxrange(self, channel_checked) -> float:
-        ''' -- возвращает заданное максимальное значение диапазона канала --'''
-        match channel_checked.currentText():
-            case "10 mV": 	return 10
-            case "20 mV": 	return 20
-            case "50 mV": 	return 50
-            case "100 mV": 	return 100
-            case "200 mV": 	return 200
-            case "500 mV": 	return 500
-            case "1 V": 	return 1000
-            case "2 V": 	return 2000
-            case "5 V": 	return 5000
-            case "10 V": 	return 10000
-            case "20 V": 	return 20000
-            case "50 V": 	return 50000
     
     def validate_data_range(self) -> dict:
         ''' TODO: -- Проверка выхода измерений за предел канала --'''
@@ -760,8 +768,8 @@ class MainUI(QMainWindow):
         print(df_result)
         df_result.to_csv("result1.csv")
 
-        # for i in range(MeasurementsNumber):
-        #     df_result.drop(i, axis=1, inplace=True)
+        for i in range(1,MeasurementsNumber+1):
+            df_result.drop(i, axis=1, inplace=True)
 
         df_header_v = df.index
         df_header_h = df.columns
@@ -772,14 +780,117 @@ class MainUI(QMainWindow):
     def operate2(self) -> None:
         '''-- Выполнение режима 2 --'''
         self.pBtn_Start_2.setEnabled(False)
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_2.text())
+        TimeDelay = int(self.lEd_Pause_2.text())
+        df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
+                                 'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
+
+        for i in range(1,MeasurementsNumber+1):
+            df = self.start_record_data()
+
+            print("Writing raw dataframe to file...")
+            filename = time.strftime("%Y-%m-%d_%H-%M")
+            df.to_csv(f"rawdata_{MeasurementsNumber}_{filename}.csv")
+            print('Save completed')
+
+            calculus_result = self.calculate_result(df)
+            df_result[i] = calculus_result[0]+calculus_result[1:5]
+            time.sleep(TimeDelay)
+      
+        self.pBtn_Start_2.setEnabled(True)
+
+        # df_result['mean'] = df_result.mean(axis=1)
+        # df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
+        # df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
+
+        print(df_result)
+        df_result.to_csv("result2.csv")
+
+        # for i in range(1,MeasurementsNumber+1):
+        #     df_result.drop(i, axis=1, inplace=True)
+
+        df_header_v = df.index
+        df_header_h = df.columns
+
+        model = PandasTableModel(df_result, df_header_h, df_header_v)
+        self.tblView_Result_2.setModel(model)
 
     def operate3(self) -> None:
         '''-- Выполнение режима 3 --'''
         self.pBtn_Start_3.setEnabled(False)
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_3.text())
+        TimeDelay = int(self.lEd_Pause_3.text())
+        df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
+                                 'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
+
+        for i in range(1,MeasurementsNumber+1):
+            df = self.start_record_data()
+
+            print("Writing raw dataframe to file...")
+            filename = time.strftime("%Y-%m-%d_%H-%M")
+            df.to_csv(f"rawdata_{MeasurementsNumber}_{filename}.csv")
+            print('Save completed')
+
+            calculus_result = self.calculate_result(df)
+            df_result[i] = calculus_result[0]+calculus_result[1:5]
+            time.sleep(TimeDelay)
+      
+        self.pBtn_Start_3.setEnabled(True)
+
+        df_result['mean'] = df_result.mean(axis=1)
+        df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
+        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
+
+        print(df_result)
+        df_result.to_csv("result4.csv")
+
+        for i in range(1,MeasurementsNumber+1):
+            df_result.drop(i, axis=1, inplace=True)
+
+        df_header_v = df.index
+        df_header_h = df.columns
+
+        model = PandasTableModel(df_result, df_header_h, df_header_v)
+        self.tblView_Result_3.setModel(model)
+
 
     def operate4(self) -> None:
         '''-- Выполнение режима 4 --'''
         self.pBtn_Start_4.setEnabled(False)
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_4.text())
+        TimeDelay = int(self.lEd_Pause_4.text())
+        df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
+                                 'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
+
+        for i in range(1,MeasurementsNumber+1):
+            df = self.start_record_data()
+
+            print("Writing raw dataframe to file...")
+            filename = time.strftime("%Y-%m-%d_%H-%M")
+            df.to_csv(f"rawdata_{MeasurementsNumber}_{filename}.csv")
+            print('Save completed')
+
+            calculus_result = self.calculate_result(df)
+            df_result[i] = calculus_result[0]+calculus_result[1:5]
+            time.sleep(TimeDelay)
+      
+        self.pBtn_Start_4.setEnabled(True)
+
+        df_result['mean'] = df_result.mean(axis=1)
+        df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
+        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
+
+        print(df_result)
+        df_result.to_csv("result4.csv")
+
+        for i in range(1,MeasurementsNumber+1):
+            df_result.drop(i, axis=1, inplace=True)
+
+        df_header_v = df.index
+        df_header_h = df.columns
+
+        model = PandasTableModel(df_result, df_header_h, df_header_v)
+        self.tblView_Result_4.setModel(model)
 
     def calculate_result(self, df_name: pd.DataFrame) -> list:
         '''-- Обсчёт данных с помощью модуля calc --'''
