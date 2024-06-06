@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>868</width>
-    <height>593</height>
+    <width>870</width>
+    <height>800</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -390,6 +390,12 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lEd_Pause_1">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>30</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>200</width>
@@ -397,7 +403,7 @@
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>1.45</string>
+                    <string>3 сек</string>
                    </property>
                   </widget>
                  </item>
@@ -422,6 +428,12 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lEd_MeasurementsNumber_1">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>30</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>200</width>
@@ -429,7 +441,7 @@
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>1.45</string>
+                    <string>3 измерения</string>
                    </property>
                   </widget>
                  </item>
@@ -533,7 +545,7 @@
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>0</height>
+                     <height>30</height>
                     </size>
                    </property>
                    <property name="maximumSize">
@@ -543,7 +555,7 @@
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>1.45</string>
+                    <string>3 сек</string>
                    </property>
                   </widget>
                  </item>
@@ -571,7 +583,7 @@
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>0</height>
+                     <height>30</height>
                     </size>
                    </property>
                    <property name="maximumSize">
@@ -581,7 +593,7 @@
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>1.45</string>
+                    <string>3 измерения</string>
                    </property>
                   </widget>
                  </item>
@@ -650,7 +662,7 @@
          <widget class="QFrame" name="frame_3">
           <property name="maximumSize">
            <size>
-            <width>700</width>
+            <width>16777215</width>
             <height>16777215</height>
            </size>
           </property>
@@ -671,38 +683,6 @@
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
-               <widget class="QFrame" name="frame_3_1_1">
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_9">
-                 <item>
-                  <widget class="QLabel" name="lbl_Pause_3">
-                   <property name="text">
-                    <string>Пауза между запусками измерений</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLineEdit" name="lEd_Pause_3">
-                   <property name="maximumSize">
-                    <size>
-                     <width>200</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="placeholderText">
-                    <string>1.45</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
                <widget class="QFrame" name="frame_3_1_2">
                 <property name="frameShape">
                  <enum>QFrame::StyledPanel</enum>
@@ -720,6 +700,18 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lEd_MeasurementsNumber_3">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>40</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>200</width>
@@ -727,7 +719,7 @@
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>1.45</string>
+                    <string>3 измерения</string>
                    </property>
                   </widget>
                  </item>
@@ -741,12 +733,42 @@
             <widget class="QPushButton" name="pBtn_Start_3">
              <property name="minimumSize">
               <size>
-               <width>150</width>
+               <width>120</width>
                <height>80</height>
               </size>
              </property>
              <property name="text">
-              <string>Старт измерений</string>
+              <string>Старт
+измерений</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Next_3">
+             <property name="minimumSize">
+              <size>
+               <width>120</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Следующее
+измерение</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pBtn_Finish_3">
+             <property name="minimumSize">
+              <size>
+               <width>120</width>
+               <height>80</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Окончание
+измерений
+Вывод таблицы</string>
              </property>
             </widget>
            </item>
@@ -754,7 +776,7 @@
             <widget class="QPushButton" name="pBtn_Save2File_3">
              <property name="minimumSize">
               <size>
-               <width>150</width>
+               <width>120</width>
                <height>80</height>
               </size>
              </property>
@@ -840,6 +862,12 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lEd_Pause_4">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>30</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>200</width>
@@ -847,7 +875,7 @@
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>1.45</string>
+                    <string>3 сек</string>
                    </property>
                   </widget>
                  </item>
@@ -878,6 +906,12 @@
                  </item>
                  <item>
                   <widget class="QLineEdit" name="lEd_MeasurementsNumber_4">
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>30</height>
+                    </size>
+                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>200</width>
@@ -885,7 +919,7 @@
                     </size>
                    </property>
                    <property name="placeholderText">
-                    <string>1.45</string>
+                    <string>3 измерения</string>
                    </property>
                   </widget>
                  </item>
