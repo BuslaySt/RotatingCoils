@@ -150,14 +150,14 @@ class MainUI(QMainWindow):
         self.hSld_ChDigRange.valueChanged.connect(lambda: self.lEd_ChDigRange.setText(str(self.hSld_ChDigRange.value()/10)))
 
         # Запуск измерений кнопками "Старт измерений"
-        self.pBtn_Start_1.clicked.connect(self.operate1)
-        self.pBtn_Start_2.clicked.connect(self.operate2)
-        self.pBtn_Start_3.clicked.connect(self.operate3)
-        self.pBtn_Start_4.clicked.connect(self.operate4)
-        # self.pBtn_Start_1.clicked.connect(self.operating_mode1)
-        # self.pBtn_Start_2.clicked.connect(self.operating_mode2)
-        # self.pBtn_Start_3.clicked.connect(self.operating_mode3)
-        # self.pBtn_Start_4.clicked.connect(self.operating_mode4)
+        # self.pBtn_Start_1.clicked.connect(self.operate1)
+        # self.pBtn_Start_2.clicked.connect(self.operate2)
+        # self.pBtn_Start_3.clicked.connect(self.operate3)
+        # self.pBtn_Start_4.clicked.connect(self.operate4)
+        self.pBtn_Start_1.clicked.connect(self.operating_mode1)
+        self.pBtn_Start_2.clicked.connect(self.operating_mode2)
+        self.pBtn_Start_3.clicked.connect(self.operating_mode3)
+        self.pBtn_Start_4.clicked.connect(self.operating_mode4)
         
         # Инициализация начальных значений осциллографа Picoscope
         self.resolutionUpdate()
@@ -752,10 +752,10 @@ class MainUI(QMainWindow):
 
             print("Writing raw dataframe to file...")
             filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{MeasurementsNumber}_{filename}.csv")
+            df.to_csv(f"rawdata_{i}_{filename}.csv")
             print('Save completed')
 
-            calculus_result = self.calculate_result(df)
+            calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
             time.sleep(TimeDelay)
       
@@ -766,13 +766,13 @@ class MainUI(QMainWindow):
         df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
 
         print(df_result)
-        df_result.to_csv("result1.csv")
+        df_result.to_csv("result_1.csv")
 
         for i in range(1,MeasurementsNumber+1):
             df_result.drop(i, axis=1, inplace=True)
 
-        df_header_v = df.index
-        df_header_h = df.columns
+        df_header_v = df_result.index
+        df_header_h = df_result.columns
 
         model = PandasTableModel(df_result, df_header_h, df_header_v)
         self.tblView_Result_1.setModel(model)
@@ -782,6 +782,7 @@ class MainUI(QMainWindow):
         self.pBtn_Start_2.setEnabled(False)
         MeasurementsNumber = int(self.lEd_MeasurementsNumber_2.text())
         TimeDelay = int(self.lEd_Pause_2.text())
+        '''
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
@@ -790,10 +791,10 @@ class MainUI(QMainWindow):
 
             print("Writing raw dataframe to file...")
             filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{MeasurementsNumber}_{filename}.csv")
+            df.to_csv(f"rawdata_{i}_{filename}.csv")
             print('Save completed')
 
-            calculus_result = self.calculate_result(df)
+            calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
             time.sleep(TimeDelay)
       
@@ -804,13 +805,15 @@ class MainUI(QMainWindow):
         # df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
 
         print(df_result)
-        df_result.to_csv("result2.csv")
+        df_result.to_csv("result_2.csv")
 
+        '''
+        df_result = pd.read_csv("result_2.csv")
         # for i in range(1,MeasurementsNumber+1):
         #     df_result.drop(i, axis=1, inplace=True)
 
-        df_header_v = df.index
-        df_header_h = df.columns
+        df_header_v = df_result.index
+        df_header_h = df_result.columns
 
         model = PandasTableModel(df_result, df_header_h, df_header_v)
         self.tblView_Result_2.setModel(model)
@@ -828,10 +831,10 @@ class MainUI(QMainWindow):
 
             print("Writing raw dataframe to file...")
             filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{MeasurementsNumber}_{filename}.csv")
+            df.to_csv(f"rawdata_{i}_{filename}.csv")
             print('Save completed')
 
-            calculus_result = self.calculate_result(df)
+            calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
             time.sleep(TimeDelay)
       
@@ -842,17 +845,16 @@ class MainUI(QMainWindow):
         df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
 
         print(df_result)
-        df_result.to_csv("result4.csv")
+        df_result.to_csv("result_3.csv")
 
         for i in range(1,MeasurementsNumber+1):
             df_result.drop(i, axis=1, inplace=True)
 
-        df_header_v = df.index
-        df_header_h = df.columns
+        df_header_v = df_result.index
+        df_header_h = df_result.columns
 
         model = PandasTableModel(df_result, df_header_h, df_header_v)
         self.tblView_Result_3.setModel(model)
-
 
     def operate4(self) -> None:
         '''-- Выполнение режима 4 --'''
@@ -867,10 +869,10 @@ class MainUI(QMainWindow):
 
             print("Writing raw dataframe to file...")
             filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{MeasurementsNumber}_{filename}.csv")
+            df.to_csv(f"rawdata_{i}_{filename}.csv")
             print('Save completed')
 
-            calculus_result = self.calculate_result(df)
+            calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
             time.sleep(TimeDelay)
       
@@ -881,13 +883,13 @@ class MainUI(QMainWindow):
         df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
 
         print(df_result)
-        df_result.to_csv("result4.csv")
+        df_result.to_csv("result_4.csv")
 
         for i in range(1,MeasurementsNumber+1):
             df_result.drop(i, axis=1, inplace=True)
 
-        df_header_v = df.index
-        df_header_h = df.columns
+        df_header_v = df_result.index
+        df_header_h = df_result.columns
 
         model = PandasTableModel(df_result, df_header_h, df_header_v)
         self.tblView_Result_4.setModel(model)
