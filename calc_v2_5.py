@@ -277,10 +277,10 @@ def sextupole_coefficient(r: float, h: float) -> tuple:
 
     return sensitivity_compensated, sensitivity_uncompensated, sensitivity_uncomp_minus
 
-def octupole_coefficient(r: float, h: float, Nw: int, R0: float) -> tuple:
+def octupole_coefficient(r: float, h: float, Nw: int, R0: float, Leff: float) -> tuple:
     ic('Calculating octupole bucking coefficient...')
     N = 4
-    Leff = 0.2
+ 
     r1 = 0
     r2 = 2*r
     r3 = 2*r + h
@@ -326,7 +326,7 @@ def octupole_coefficient(r: float, h: float, Nw: int, R0: float) -> tuple:
 
 def harmonic_calculation(integral_compensated_value, integral_uncompensated_value, sensitivity_compensated, sensitivity_uncompensated, outer_coil_radius, N, sensitivity_uncomp_minus, quant, aperture_radius, magnet_length, coil_count):
     dx = math.pi/(quant*180)
-    depth = 16  # Хорошее имя переменной, но можно лучше
+    depth = 16  # количество гармоник
        
     p = []
     q = []
@@ -398,15 +398,29 @@ def harmonic_calculation(integral_compensated_value, integral_uncompensated_valu
         except ZeroDivisionError:
             harmonics_relative_coeffs.append(0)
     
-    # формулы разбить на части и выделить в читаемые переменные значения типа math.sqrt(math.pow(P[N-1], 2)
     deltaX = outer_coil_radius * sensitivity_uncompensated * P[-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[-1], 2) + math.pow(Q[-1], 2)))
     deltaY = outer_coil_radius * sensitivity_uncompensated * Q[-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[-1], 2) + math.pow(Q[-1], 2)))
 
     return harmonics_relative_coeffs, deltaX, deltaY, source_rotation_angle_a, H_avg, P, Q
 
-def octupole_harmonic_calculation(integral_compensated_value, integral_uncompensated_value, sensitivity_compensated, sensitivity_uncompensated, outer_coil_radius, N, sensitivity_uncomp_minus, quant, aperture_radius, magnet_length, coil_count, R0):
+def octupole_harmonic_calculation(parameters):
+    
+    integral_compensated_value = parameters[0]
+    integral_uncompensated_value = parameters[1]
+    sensitivity_compensated = parameters[2]
+    sensitivity_uncompensated = parameters[3]
+    outer_coil_radius = parameters[4]
+    N = parameters[5]
+    sensitivity_uncomp_minus = parameters[6]
+    quant = parameters[7]
+    aperture_radius = parameters[8]
+    magnet_length = parameters[9]
+    coil_count = parameters[10]
+    R0 = parameters[11]
+    Leff = parameters[12]
+
     dx = math.pi/(quant*180)
-    depth = 16  # Хорошее имя переменной, но можно лучше
+    depth = 16  # количество гармоник
     
     p = []
     q = []
@@ -417,7 +431,6 @@ def octupole_harmonic_calculation(integral_compensated_value, integral_uncompens
     end = 360
     period = np.arange(start+1/quant, end+1/quant, 1/quant)
     mu0 = 4*math.pi*math.pow(10, -7)
-    
     ic(len(period))
 
     for n in range (1, depth+1):
@@ -438,8 +451,7 @@ def octupole_harmonic_calculation(integral_compensated_value, integral_uncompens
         q.append((1/math.pi)*sumS*dx)
     ic(len(p))
     ic(len(q))       
-    # LBn.append(n*math.sqrt(math.pow(pee, 2) + math.pow(quu, 2))/(M*r*s))	
-              
+                  
     for n in range(1, N+1):
         F_cos = []
         F_sin = []
@@ -458,7 +470,7 @@ def octupole_harmonic_calculation(integral_compensated_value, integral_uncompens
         Q.append((1/math.pi)*sum_S*dx)
 
     ic(len(F_cos))    
-    # LCN.append(math.sqrt(math.pow(Pee, 2) + math.pow(Quu, 2))/(M*math.pow(r, n)*S))	
+    
     ic(len(P))
     harmonics_relative_coeffs = []
     for n in range (1, depth+1):
@@ -472,20 +484,14 @@ def octupole_harmonic_calculation(integral_compensated_value, integral_uncompens
     
     psy_angle = -math.atan(Q[-1] / P[-1])
     source_rotation_angle_a = psy_angle * N # Угол поворота источника поля альфа
-    Leff = 0.2 #octupole effective length
-    
-    #LBN = (N*math.sqrt(math.pow(P, 2) + math.pow(Q, 2))/(M*r*sensitivity_uncompensated))
+      
+  
     G_Nminus_up = ((N-1)*N*math.sqrt(math.pow(P[-1], 2) + math.pow(Q[-1], 2))) #числитель дроби
     G_Nminus_down = (magnet_length*coil_count*math.pow(outer_coil_radius, N)*sensitivity_uncompensated) #знаменатель дроби
     G_Nminus = G_Nminus_up/G_Nminus_down
     Bn = G_Nminus*math.pow(aperture_radius, N-1)
     H_avg = Bn/(2*mu0)
     
-    
-    
-    #R = math.sqrt(math.pow(Pee, 2) + math.pow(Quu, 2))/math.sqrt(math.pow(p[1], 2) + math.pow(q[1], 2))
-
-    # формулы разбить на части и выделить в читаемые переменные значения типа math.sqrt(math.pow(P[N-1], 2)
     deltaX = outer_coil_radius * sensitivity_uncompensated * P[-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[-1], 2) + math.pow(Q[-1], 2)))
     deltaY = outer_coil_radius * sensitivity_uncompensated * Q[-2] / (sensitivity_uncomp_minus * N * math.sqrt(math.pow(P[-1], 2) + math.pow(Q[-1], 2)))
 
@@ -494,7 +500,11 @@ def octupole_harmonic_calculation(integral_compensated_value, integral_uncompens
 
 def run_quadrupole(df, parameters):
     coil_count = 56
-    quant, r, h, coef_E, coef_C = parameters[4]
+    quant = parameters[0]
+    r = parameters[1]
+    h = parameters[2]
+    coef_E = parameters[3]
+    coef_C = parameters[4]
     N = parameters[5]
     aperture_radius = parameters[6]
     magnet_length = parameters[7]
@@ -506,10 +516,7 @@ def run_quadrupole(df, parameters):
     time_coef = math.pow(10, -9)
     outer_coil_radius =(5*r + 2*h) # mm
         
-    integration_result = calc.integrate_dataframe(df, coef_E, coef_C, quant, time_coef)
-    intC, intU = integration_result
-
-    
+    intC, intU = calc.integrate_dataframe(df, coef_E, coef_C, quant, time_coef)
     sensC, sensU, sens_minus = calc.quadrupole_coefficient(r, h) # чувствительность порядка N-1
     calculation_result = calc.harmonic_calculation(intC, intU, sensC, sensU, outer_coil_radius, N, sens_minus, quant, aperture_radius, magnet_length, coil_count)
 
@@ -533,11 +540,9 @@ def run_sextupole(df, parameters):
     time_coef = math.pow(10, -9)
     outer_coil_radius =(5*r + 2*h) # mm
         
-    integration_result = calc.integrate_dataframe(df, coef_E, coef_C, quant, time_coef)
-    intC, intU = integration_result
-
-    
+    intC, intU = calc.integrate_dataframe(df, coef_E, coef_C, quant, time_coef)
     sensC, sensU, sens_minus = calc.sextupole_coefficient(r, h) # чувствительность порядка N-1  
+    
     calculation_result = calc.harmonic_calculation(intC, intU, sensC, sensU, outer_coil_radius, N, sens_minus, quant, aperture_radius, magnet_length, coil_count) 
 
     
@@ -546,7 +551,8 @@ def run_sextupole(df, parameters):
 
 def run_octupole(df, parameters):
     coil_count = 28
-    R0 = 12.3
+    R0 = 12.3 # mm
+    Leff = 200 #octupole effective length mm
     quant = parameters[0]
     r = parameters[1]
     h = parameters[2]
@@ -561,13 +567,13 @@ def run_octupole(df, parameters):
     posArray = []
     spectrum = []
     time_coef = math.pow(10, -9)
-    outer_coil_radius =(5*r + 2*h) # mm
+    outer_coil_radius =(4*r + h) # mm
         
-    integration_result = calc.integrate_dataframe(df, coef_E, coef_C, quant, time_coef)
-    intC, intU = integration_result
+    intC, intU = calc.integrate_dataframe(df, coef_E, coef_C, quant, time_coef)
+    sensC, sensU, sens_minus = calc.octupole_coefficient(r, h, coil_count, R0, Leff)
     
-    sensC, sensU, sens_minus = calc.octupole_coefficient(r, h, coil_count, R0)
-    calculation_result = calc.octupole_harmonic_calculation(intC, intU, sensC, sensU, outer_coil_radius, N, sens_minus, quant, aperture_radius, magnet_length, coil_count, R0)
+    param_list = [intC, intU, sensC, sensU, outer_coil_radius, N, sens_minus, quant, aperture_radius, magnet_length, coil_count, R0, Leff]
+    calculation_result = calc.octupole_harmonic_calculation(param_list)
     
     ic('calculation complete')
     return calculation_result    
@@ -589,7 +595,7 @@ if __name__ == "__main__":
     startTime = time.time()
     dirPath = pathlib.Path(__file__).parent
     result_dir = pathlib.Path('result') # каталог для сохранения результатов обработки
-    filename = ["rawdata_5_2024-06-04_17-05.csv", "rawdata_5_2024-06-04_17-09.csv", "rawdata_5_2024-06-04_17-12.csv", "rawdata_5_2024-06-04_17-15.csv", "rawdata_5_2024-06-04_17-18.csv"] #сюда вводятся имена файлов, подлежащие обработке, сами файлы должнылежать в каталоге data относительно места запуска скрипта
+    filename = ["4-p_rawdata_2024-05-22_13-32.csv", ]#"rawdata_5_2024-06-04_17-09.csv", "rawdata_5_2024-06-04_17-12.csv", "rawdata_5_2024-06-04_17-15.csv", "rawdata_5_2024-06-04_17-18.csv"] #сюда вводятся имена файлов, подлежащие обработке, сами файлы должнылежать в каталоге data относительно места запуска скрипта
     data_dir = pathlib.Path('data')
         
 
@@ -607,7 +613,7 @@ if __name__ == "__main__":
 
         
         #coil parameters
-        N = 4
+        N = 2
         #int(input('Input N for 2n-pole magnet: '))
         
         quant = 1
@@ -616,10 +622,10 @@ if __name__ == "__main__":
             magnet_type = 'quadrupole'
             r = 1.915 #mm
             h = 2.1 #mm
-            aperture_radius = 0.016 #mm
+            aperture_radius = 16 #mm
             coef_E = 2.56*pow(10, -5) # 1/39000
             coef_C = 1*pow(10, -5)    #1/100000
-            magnet_length = 0.090   #длина магнита m
+            magnet_length = 90   #длина магнита m
             ic(N)
             ic(magnet_type)
             param_list = [quant, r, h, coef_E, coef_C, N, aperture_radius, magnet_length, magnet_type]
@@ -629,10 +635,10 @@ if __name__ == "__main__":
             magnet_type = 'sextupole'
             r = 2.065 #mm
             h = 2.4 #mm
-            aperture_radius = 0.019 #m
+            aperture_radius = 19 #mm
             coef_E = 2.56*pow(10, -5) # 1/39000
             coef_C = 1*pow(10, -5)    #1/100000
-            magnet_length = 0.090   #длина магнита m
+            magnet_length = 90   #длина магнита mm
             ic(N)
             ic(magnet_type)
             param_list = [quant, r, h, coef_E, coef_C, N, aperture_radius, magnet_length, magnet_type]
@@ -642,10 +648,10 @@ if __name__ == "__main__":
             magnet_type = 'octupole'
             r = 1.79 #mm
             h = 2.1 #mm
-            aperture_radius = 0.0185 #m
+            aperture_radius = 18.5 #mm
             coef_E = 2.56*pow(10, -5) # 1/39000
             coef_C = 1*pow(10, -5)    #1/100000
-            magnet_length = 0.090   #длина магнита m
+            magnet_length = 90   #длина магнита mm
             ic(N)
             ic(magnet_type)
             param_list = [quant, r, h, coef_E, coef_C, N, aperture_radius, magnet_length, magnet_type]
