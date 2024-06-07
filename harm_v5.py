@@ -11,7 +11,7 @@ import math
 import threading
 
 # модуль расчёта интегральных характеристик
-import calc_v2_5 as calc
+import calc_v2_5_01 as calc
 
 # Подключение необходимых модулей для вращения мотора
 import serial
@@ -673,22 +673,19 @@ class MainUI(QMainWindow):
         # Закрытие и отключение осциллографа
         self.status["close"]=ps.ps5000aCloseUnit(self.chandle)
         assert_pico_ok(self.status["close"])
-        message = "Запись данных остановлена"
+        message = "Запись данных завершена"
         print(message)
         self.statusbar.showMessage(message)
 
-    def save_data2file(self, df: pd.DataFrame) -> None:
+    def save_data2file(self, df: pd.DataFrame, i: int = '') -> None:
         ''' -- Сохранение полученных данных на диск -- '''
-        # df = pd.DataFrame(self.data)
-        # df['D0'] = df['D0'].apply(int)
-        # df['D1'] = df['D1'].apply(int)
 
         message = "Запись данных в файл..."
         print(message)
         self.statusbar.showMessage(message)
         
         filename = time.strftime("%Y-%m-%d_%H-%M")
-        df.to_csv(f"rawdata_{filename}.csv")
+        df.to_csv(f"rawdata_{i}_{filename}.csv")
         
         message = "Сохранение данных закончено"
         print(message)
@@ -727,6 +724,7 @@ class MainUI(QMainWindow):
 
     def operating_mode3(self) -> None:
         '''-- Многопоточность для режима 3 --'''
+        return # TODO Заглушка для неработающего режима
         self.pBtn_Start_3.setEnabled(False)
         t3 = threading.Thread(target=self.operate3, args=(), daemon=True)
         t3.start()
@@ -750,10 +748,7 @@ class MainUI(QMainWindow):
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
 
-            print("Writing raw dataframe to file...")
-            filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{i}_{filename}.csv")
-            print('Save completed')
+            # self.save_data2file(df, i)
 
             calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
@@ -763,7 +758,7 @@ class MainUI(QMainWindow):
 
         df_result['mean'] = df_result.mean(axis=1)
         df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
-        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
+        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"].abs()).round(decimals=1)
 
         print(df_result)
         df_result.to_csv("result_1.csv")
@@ -782,17 +777,13 @@ class MainUI(QMainWindow):
         self.pBtn_Start_2.setEnabled(False)
         MeasurementsNumber = int(self.lEd_MeasurementsNumber_2.text())
         TimeDelay = int(self.lEd_Pause_2.text())
-        '''
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
 
-            print("Writing raw dataframe to file...")
-            filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{i}_{filename}.csv")
-            print('Save completed')
+            # self.save_data2file(df, i)
 
             calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
@@ -802,13 +793,11 @@ class MainUI(QMainWindow):
 
         # df_result['mean'] = df_result.mean(axis=1)
         # df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
-        # df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
+        # df_result["percent"] = (100*df_result["stdev"]/df_result["mean"].abs()).round(decimals=1)
 
         print(df_result)
         df_result.to_csv("result_2.csv")
 
-        '''
-        df_result = pd.read_csv("result_2.csv")
         # for i in range(1,MeasurementsNumber+1):
         #     df_result.drop(i, axis=1, inplace=True)
 
@@ -829,10 +818,7 @@ class MainUI(QMainWindow):
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
 
-            print("Writing raw dataframe to file...")
-            filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{i}_{filename}.csv")
-            print('Save completed')
+            # self.save_data2file(df, i)
 
             calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
@@ -842,13 +828,13 @@ class MainUI(QMainWindow):
 
         df_result['mean'] = df_result.mean(axis=1)
         df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
-        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
+        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"].abs()).round(decimals=1)
 
         print(df_result)
         df_result.to_csv("result_3.csv")
 
-        for i in range(1,MeasurementsNumber+1):
-            df_result.drop(i, axis=1, inplace=True)
+        # for i in range(1,MeasurementsNumber+1):
+        #     df_result.drop(i, axis=1, inplace=True)
 
         df_header_v = df_result.index
         df_header_h = df_result.columns
@@ -867,10 +853,7 @@ class MainUI(QMainWindow):
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
 
-            print("Writing raw dataframe to file...")
-            filename = time.strftime("%Y-%m-%d_%H-%M")
-            df.to_csv(f"rawdata_{i}_{filename}.csv")
-            print('Save completed')
+            # self.save_data2file(df, i)
 
             calculus_result = list(self.calculate_result(df))
             df_result[i] = calculus_result[0]+calculus_result[1:5]
@@ -880,13 +863,13 @@ class MainUI(QMainWindow):
 
         df_result['mean'] = df_result.mean(axis=1)
         df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
-        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"]).round(decimals=1).abs()
+        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"].abs()).round(decimals=1)
 
         print(df_result)
         df_result.to_csv("result_4.csv")
 
-        for i in range(1,MeasurementsNumber+1):
-            df_result.drop(i, axis=1, inplace=True)
+        # for i in range(1,MeasurementsNumber+1):
+        #     df_result.drop(i, axis=1, inplace=True)
 
         df_header_v = df_result.index
         df_header_h = df_result.columns
@@ -913,6 +896,7 @@ class MainUI(QMainWindow):
                 coef_C = 1*pow(10, -5)    #1/100000
                 magnet_length = 0.09   #длина магнита
             case 2:
+                N = 3
                 magnet_type = 'sextupole'
                 r = 2.065 #mm
                 h = 2.4 #mm
