@@ -11,7 +11,7 @@ import math
 import threading
 
 # модуль расчёта интегральных характеристик
-import calc_v2_5_01 as calc
+import calc_v3a as calc
 
 # Подключение необходимых модулей для вращения мотора
 import serial
@@ -38,9 +38,9 @@ class PandasTableModel(QAbstractTableModel):
         return len(self.data.columns)
 
     def data(self, index, role=Qt.DisplayRole):
+        '''Представление данных в таблице'''
         if role == Qt.DisplayRole:
             value = self.data.iloc[index.row(), index.column()]
-            # if np.isnan(value):
             if pd.isnull(value):
                 return '-'
             if isinstance(value, float):
@@ -49,7 +49,7 @@ class PandasTableModel(QAbstractTableModel):
         return None            
 
     def headerData(self, section, orientation, role):
-        # section is the index of the column/row.
+        '''Представление заголовков в таблице'''
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self.hheaders[section]
@@ -60,6 +60,7 @@ class PandasTableModel(QAbstractTableModel):
 class MainUI(QMainWindow):
     '''--- Основной класс приложения ---'''
     def __init__(self):
+        '''--- Инициализация класса, переменных и элементов управления GUI ---'''
         super(MainUI, self).__init__()
         loadUi("harm_ui.ui", self)
         self.setWindowIcon(QIcon("logo.png"))
@@ -67,7 +68,7 @@ class MainUI(QMainWindow):
         # Массив данных
         self.data = dict()
 
-        ''' - переменные для Picoscope 5442D -'''
+        '''- переменные для Picoscope 5442D -'''
         self.resolutions = ["14", "15", "16"] # битность
         self.resolution = 14
         self.ranges = ["10 mV", "20 mV", "50 mV", "100 mV", "200 mV", "500 mV", "1 V", "2 V", "5 V", "10 V", "20 V"]  # порог чувствительности , "50 V"] 50V не работает
@@ -170,21 +171,23 @@ class MainUI(QMainWindow):
         magnetTypes = ['Квадруполь-32', 'Квадруполь-25', 'Секступоль', 'Октуполь']
         self.cBox_MagnetType.addItems(magnetTypes)
 
-        operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. Измерения при изменении тока в обмотках', '4. Остаточные гармоники']
+        # operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. Измерения при изменении тока в обмотках', '4. Остаточные гармоники']
+        operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. ---В разработке---', '4. Остаточные гармоники']
         self.cBox_OperatingModes.addItems(operatingModes)
 
     '''--- Кнопки управления и проверок ---'''
 
     def init_continue(self) -> None:
+        '''- Действия при нажатии кнопки "Продолжить" -'''
         if self.check_init():
             self.select_tab()
         else:
-            message = "Введите поля инициализации и выберите режим"
+            message = "Заполните поля инициализации и выберите режим"
             print(message)
             self.statusbar.showMessage(message)
 
     def check_init(self) -> bool:
-        '''- проверка заполнения полей инициализации -'''
+        '''- Проверка заполнения полей инициализации -'''
         return True   #TODO Заглушка, убрать
         if self.lEd_Name.text() and self.lEd_MagnetSerial.text() and self.cBox_MagnetType.currentText() and self.cBox_OperatingModes.currentText():
             return True
@@ -255,14 +258,14 @@ class MainUI(QMainWindow):
             self.pBtn_Rotation.setDisabled(False)
             self.pBtn_Stop.setDisabled(False)
             self.pBtn_Contunue.setDisabled(False)
-        except:
+        except serial.serialutil.SerialException:
             self.lbl_ServoStatus_2.setText("Не подключен")
             message = "Привод не виден"
             print(message)
             self.statusbar.showMessage(message)
 
     def rotate_motor_continious(self) -> None:
-        ''' -- Continious coil rotation --'''
+        ''' -- Постоянное вращение катушек --'''
         message = "Старт вращения"
         print(message)
         self.statusbar.showMessage(message)
@@ -291,7 +294,7 @@ class MainUI(QMainWindow):
             self.statusbar.showMessage(message)
 
     def rotate_motor_absolute(self) -> None:
-        ''' -- Continious coil rotation --'''
+        ''' -- Вращение катушек на заданное число оборотов с заданной абсолютной позиции --'''
         message = "Старт вращения"
         print(message)
         self.statusbar.showMessage(message)
@@ -316,7 +319,7 @@ class MainUI(QMainWindow):
             self.statusbar.showMessage(message)
 
     def rotate_motor_relative(self) -> None:
-        ''' -- Continious coil rotation --'''
+        ''' -- Вращение катушек на заданное число оборотов с относительной позиции --'''
         message = "Старт вращения"
         print(message)
         self.statusbar.showMessage(message)
@@ -355,6 +358,7 @@ class MainUI(QMainWindow):
     '''--- Управление АЦП ---'''
 
     def open_scope_unit(self) -> None:
+        '''- Захват управления блоком АЦП -'''
         match self.resolution:
             case 14:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_14BIT"]
             case 15:	resolution_code = ps.PS5000A_DEVICE_RESOLUTION["PS5000A_DR_15BIT"]
@@ -373,6 +377,19 @@ class MainUI(QMainWindow):
             else:
                 raise assert_pico_ok(self.status["changePowerSource"])
     
+    def stop_recording(self) -> None:
+        ''' -- Остановка и отключение АЦП -- '''
+        # Остановка осциллографа
+        self.status["stop"] = ps.ps5000aStop(self.chandle)
+        assert_pico_ok(self.status["stop"])
+        
+        # Закрытие и отключение осциллографа
+        self.status["close"]=ps.ps5000aCloseUnit(self.chandle)
+        assert_pico_ok(self.status["close"])
+        message = "Запись данных завершена"
+        print(message)
+        self.statusbar.showMessage(message)
+
     def resolutionUpdate(self) -> None:
         '''-- Выбор битности разрешения в зависимости от количества используемых каналов --'''
         self.channels[0] = self.chkBox_Ch1Enable.checkState()
@@ -419,6 +436,7 @@ class MainUI(QMainWindow):
         self.interval = self.cBox_Interval.currentText()
 
     def channel_range(self, channel_checked) -> int:
+        '''- Пределы измерения аналоговых каналов -'''
         match channel_checked.currentText():
             case "10 mV": 	return ps.PS5000A_RANGE["PS5000A_10MV"]
             case "20 mV": 	return ps.PS5000A_RANGE["PS5000A_20MV"]
@@ -441,8 +459,7 @@ class MainUI(QMainWindow):
         # Настройка канала A
         # handle = self.chandle
         channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_A"]
-        # enabled == 1, disabled == 0
-        enabled = 1 if self.chkBox_Ch1Enable.isChecked() else 0
+        enabled = 1 if self.chkBox_Ch1Enable.isChecked() else 0 # enabled == 1, disabled == 0
         # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
         self.chRange["A"] = self.channel_range(self.cBox_Ch1Range)
         # analogue offset = 0 V
@@ -450,10 +467,9 @@ class MainUI(QMainWindow):
         assert_pico_ok(self.status["setChA"])
         
         # Настройка канала B
-        # handle = harm.chandle
+        # handle = self.chandle
         channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_B"]
-        # enabled == 1, disabled == 0
-        enabled = 1 if self.chkBox_Ch2Enable.isChecked() else 0
+        enabled = 1 if self.chkBox_Ch2Enable.isChecked() else 0 # enabled == 1, disabled == 0
         # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
         self.chRange["B"] = self.channel_range(self.cBox_Ch2Range)
         # analogue offset = 0 V
@@ -461,10 +477,9 @@ class MainUI(QMainWindow):
         assert_pico_ok(self.status["setChB"])
         
         # Настройка канала C
-        # handle = harm.chandle
+        # handle = self.chandle
         channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_C"]
-        # enabled == 1, disabled == 0
-        enabled = 1 if self.chkBox_Ch3Enable.isChecked() else 0
+        enabled = 1 if self.chkBox_Ch3Enable.isChecked() else 0 # enabled == 1, disabled == 0
         # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
         self.chRange["C"] = self.channel_range(self.cBox_Ch3Range)
         # analogue offset = 0 V
@@ -472,10 +487,9 @@ class MainUI(QMainWindow):
         assert_pico_ok(self.status["setChC"])
 
         # Настройка канала D
-        # handle = harm.chandle
+        # handle = self.chandle
         channel = ps.PS5000A_CHANNEL["PS5000A_CHANNEL_D"]
-        # enabled == 1, disabled == 0
-        enabled = 1 if self.chkBox_Ch4Enable.isChecked() else 0
+        enabled = 1 if self.chkBox_Ch4Enable.isChecked() else 0 # enabled == 1, disabled == 0
         # coupling_type = ps.PS5000A_COUPLING["PS5000A_DC"]
         self.chRange["D"] = self.channel_range(self.cBox_Ch4Range)
         # analogue offset = 0 V
@@ -664,19 +678,6 @@ class MainUI(QMainWindow):
         # self.save_data2file(df)
         return df
 
-    def stop_recording(self) -> None:
-        ''' -- Остановка и отключение осциллографа -- '''
-        # Остановка осциллографа
-        self.status["stop"] = ps.ps5000aStop(self.chandle)
-        assert_pico_ok(self.status["stop"])
-        
-        # Закрытие и отключение осциллографа
-        self.status["close"]=ps.ps5000aCloseUnit(self.chandle)
-        assert_pico_ok(self.status["close"])
-        message = "Запись данных завершена"
-        print(message)
-        self.statusbar.showMessage(message)
-
     def save_data2file(self, df: pd.DataFrame, i: int = '') -> None:
         ''' -- Сохранение полученных данных на диск -- '''
 
@@ -740,10 +741,11 @@ class MainUI(QMainWindow):
     def operate1(self) -> None:
         '''-- Выполнение режима 1 --'''
         self.pBtn_Start_1.setEnabled(False)
-        MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
-        TimeDelay = int(self.lEd_Pause_1.text())
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
+
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
+        TimeDelay = int(self.lEd_Pause_1.text())
 
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
@@ -775,10 +777,11 @@ class MainUI(QMainWindow):
     def operate2(self) -> None:
         '''-- Выполнение режима 2 --'''
         self.pBtn_Start_2.setEnabled(False)
-        MeasurementsNumber = int(self.lEd_MeasurementsNumber_2.text())
-        TimeDelay = int(self.lEd_Pause_2.text())
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
+
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_2.text())
+        TimeDelay = int(self.lEd_Pause_2.text())
 
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
@@ -810,10 +813,11 @@ class MainUI(QMainWindow):
     def operate3(self) -> None:
         '''-- Выполнение режима 3 --'''
         self.pBtn_Start_3.setEnabled(False)
-        MeasurementsNumber = int(self.lEd_MeasurementsNumber_3.text())
-        TimeDelay = int(self.lEd_Pause_3.text())
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
+
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_3.text())
+        TimeDelay = int(self.lEd_Pause_3.text())
 
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
@@ -845,10 +849,11 @@ class MainUI(QMainWindow):
     def operate4(self) -> None:
         '''-- Выполнение режима 4 --'''
         self.pBtn_Start_4.setEnabled(False)
-        MeasurementsNumber = int(self.lEd_MeasurementsNumber_4.text())
-        TimeDelay = int(self.lEd_Pause_4.text())
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
+
+        MeasurementsNumber = int(self.lEd_MeasurementsNumber_4.text())
+        TimeDelay = int(self.lEd_Pause_4.text())
 
         for i in range(1,MeasurementsNumber+1):
             df = self.start_record_data()
