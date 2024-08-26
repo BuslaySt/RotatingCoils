@@ -150,16 +150,16 @@ class MainUI( QMainWindow):
         self.hSld_ChDigRange.valueChanged.connect(lambda: self.lEd_ChDigRange.setText(str(self.hSld_ChDigRange.value()/10)))
 
         # Запуск измерений кнопками "Старт измерений"
-        self.pBtn_Start_1.clicked.connect(self.operate1)
-        self.pBtn_Start_2.clicked.connect(self.operate2)
+        # self.pBtn_Start_1.clicked.connect(self.operate1)
+        self.pBtn_Start_1.clicked.connect(self.operating_mode1)
+        # self.pBtn_Start_2.clicked.connect(self.operate2)
+        self.pBtn_Start_2.clicked.connect(self.operating_mode2)
         self.pBtn_Start_3.clicked.connect(self.operate3_start)
+        # self.pBtn_Start_3.clicked.connect(self.operating_mode3)
         self.pBtn_Next_3.clicked.connect(self.operate3_next)
         self.pBtn_Finish_3.clicked.connect(self.operate3_fin)
-        self.pBtn_Start_4.clicked.connect(self.operate4)
-        # self.pBtn_Start_1.clicked.connect(self.operating_mode1)
-        # self.pBtn_Start_2.clicked.connect(self.operating_mode2)
-        # self.pBtn_Start_3.clicked.connect(self.operating_mode3)
-        # self.pBtn_Start_4.clicked.connect(self.operating_mode4)
+        # self.pBtn_Start_4.clicked.connect(self.operate4)
+        self.pBtn_Start_4.clicked.connect(self.operating_mode4)
 
         self.pBtn_Save2File_1.setEnabled(False)
         self.pBtn_Save2File_2.setEnabled(False)
@@ -185,8 +185,7 @@ class MainUI( QMainWindow):
         magnetTypes = ['Квадруполь-32', 'Секступоль', 'Октуполь']
         self.cBox_MagnetType.addItems(magnetTypes)
 
-        # operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. Измерения при изменении тока в обмотках', '4. Остаточные гармоники']
-        operatingModes = ['1. Измерение при фиксированном поле', '2. Оценка временной стабильности', '3. ---В разработке---', '4. Остаточные гармоники']
+        operatingModes = ['1. Измерения при фиксированном поле', '2. Оценка временной стабильности', '3. Измерения при изменении тока в обмотках', '4. Остаточные гармоники']
         self.cBox_OperatingModes.addItems(operatingModes)
 
     '''--- Кнопки управления и проверок ---'''
@@ -272,7 +271,7 @@ class MainUI( QMainWindow):
             self.pBtn_Rotation.setDisabled(False)
             self.pBtn_Stop.setDisabled(False)
             self.pBtn_Contunue.setDisabled(False)
-        except serial.serialutil.SerialException:
+        except (serial.serialutil.SerialException, minimalmodbus.NoResponseError):
             self.lbl_ServoStatus_2.setText("Не подключен")
             message = "Привод не виден"
             print(message)
@@ -389,6 +388,9 @@ class MainUI( QMainWindow):
             elif powerStatus == 282:
                 self.status["changePowerSource"] = ps.ps5000aChangePowerSource(self.chandle, powerStatus)
             else:
+                message = "Ошибка: смените питание"
+                print(message) 
+                self.statusbar.showMessage(message)
                 raise assert_pico_ok(self.status["changePowerSource"])
     
     def stop_recording(self) -> None:
@@ -700,7 +702,7 @@ class MainUI( QMainWindow):
         self.statusbar.showMessage(message)
         
         filename = time.strftime("%Y-%m-%d_%H-%M")
-        df.to_csv(f"rawdata_{i}_{filename}.csv") # ПИА: сохранение включено для оффлайн обработки и оценки
+        df.to_csv(f"rawdata_{i}_{filename}.csv")
         
         message = "Сохранение данных закончено"
         print(message)
@@ -725,14 +727,12 @@ class MainUI( QMainWindow):
 
     def operating_mode1(self) -> None:
         '''-- Многопоточность для режима 1 --'''
-        self.pBtn_Start_1.setEnabled(False)
         t1 = threading.Thread(target=self.operate1, args=(), daemon=True)
         t1.start()
         # t1.join()
 
     def operating_mode2(self) -> None:
         '''-- Многопоточность для режима 2 --'''
-        self.pBtn_Start_2.setEnabled(False)
         t2 = threading.Thread(target=self.operate2, args=(), daemon=True)
         t2.start()
         # t2.join()
@@ -740,26 +740,31 @@ class MainUI( QMainWindow):
     def operating_mode3(self) -> None:
         '''-- Многопоточность для режима 3 --'''
         return # TODO Заглушка для неработающего режима
-        self.pBtn_Start_3.setEnabled(False)
         t3 = threading.Thread(target=self.operate3, args=(), daemon=True)
         t3.start()
         # t3.join()
 
     def operating_mode4(self) -> None:
         '''-- Многопоточность для режима 4 --'''
-        self.pBtn_Start_4.setEnabled(False)
         t4 = threading.Thread(target=self.operate4, args=(), daemon=True)
         t4.start()
         # t4.join()
 
     def operate1(self) -> None:
         '''-- Выполнение режима 1 --'''
-        self.pBtn_Start_1.setEnabled(False)
         self.df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
-        MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
-        TimeDelay = int(self.lEd_Pause_1.text())
+        try:
+            MeasurementsNumber = int(self.lEd_MeasurementsNumber_1.text())
+            TimeDelay = int(self.lEd_Pause_1.text())
+        except ValueError:
+            message = "Введите данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+
+        self.pBtn_Start_1.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
             df1 = self.start_record_data()
@@ -791,12 +796,19 @@ class MainUI( QMainWindow):
 
     def operate2(self) -> None:
         '''-- Выполнение режима 2 --'''
-        self.pBtn_Start_2.setEnabled(False)
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
-        MeasurementsNumber = int(self.lEd_MeasurementsNumber_2.text())
-        TimeDelay = int(self.lEd_Pause_2.text())
+        try:
+            MeasurementsNumber = int(self.lEd_MeasurementsNumber_2.text())
+            TimeDelay = int(self.lEd_Pause_2.text())
+        except ValueError:
+            message = "Введите данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+
+        self.pBtn_Start_2.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
             df2 = self.start_record_data()
@@ -828,11 +840,18 @@ class MainUI( QMainWindow):
 
     def operate3_start(self) -> None:
         '''-- Старт режима 3 --'''
-        self.pBtn_Start_3.setEnabled(False)
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
-        self.MeasurementsNumber = int(self.lEd_MeasurementsNumber_3.text())
+        try:
+            self.MeasurementsNumber = int(self.lEd_MeasurementsNumber_3.text())
+        except ValueError:
+            message = "Введите данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+
+        self.pBtn_Start_3.setEnabled(False)
 
         df3 = self.start_record_data()
 
@@ -880,12 +899,19 @@ class MainUI( QMainWindow):
 
     def operate4(self) -> None:
         '''-- Выполнение режима 4 --'''
-        self.pBtn_Start_4.setEnabled(False)
         df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
-        MeasurementsNumber = int(self.lEd_MeasurementsNumber_4.text())
-        TimeDelay = int(self.lEd_Pause_4.text())
+        try:
+            MeasurementsNumber = int(self.lEd_MeasurementsNumber_4.text())
+            TimeDelay = int(self.lEd_Pause_4.text())
+        except ValueError:
+            message = "Введите данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+
+        self.pBtn_Start_4.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
             df4 = self.start_record_data()
@@ -968,7 +994,6 @@ class MainUI( QMainWindow):
     def operating_mode4_savedata(self) -> None:
         '''-- Сохранение данных по кнопке первого метода --'''
         self.savedata('mode4')
-
 
     def calculate_result(self, df_name: pd.DataFrame) -> list:
         '''-- Обсчёт данных с помощью модуля calc --'''
