@@ -1044,11 +1044,13 @@ class MainUI( QMainWindow):
         return calc_result
    
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    # app = QApplication([])
+    # app = QApplication(sys.argv)
+    app = QApplication([])
     harm = MainUI()
     harm.show()
     
-    # app.exec_()
-    try: sys.exit(app.exec_())
+    try:
+        print("Closing Window...")
+        app.exec_()
+    # try: sys.exit(app.exec_())
     except SystemExit: print("Closing Window...")
