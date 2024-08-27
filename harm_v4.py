@@ -764,6 +764,12 @@ class MainUI( QMainWindow):
             self.statusbar.showMessage(message)
             return
 
+        if MeasurementsNumber <= 0 or TimeDelay < 0:
+            message = "Введите корректные данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+
         self.pBtn_Start_1.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
@@ -804,6 +810,12 @@ class MainUI( QMainWindow):
             TimeDelay = int(self.lEd_Pause_2.text())
         except ValueError:
             message = "Введите данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+
+        if MeasurementsNumber <= 0 or TimeDelay < 0:
+            message = "Введите корректные данные для измерений"
             print(message)
             self.statusbar.showMessage(message)
             return
@@ -850,7 +862,13 @@ class MainUI( QMainWindow):
             print(message)
             self.statusbar.showMessage(message)
             return
-
+        
+        if self.MeasurementsNumber <= 0:
+            message = "Введите корректные данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+        
         self.pBtn_Start_3.setEnabled(False)
 
         df3 = self.start_record_data()
@@ -911,6 +929,12 @@ class MainUI( QMainWindow):
             self.statusbar.showMessage(message)
             return
 
+        if MeasurementsNumber <= 0 or TimeDelay < 0:
+            message = "Введите корректные данные для измерений"
+            print(message)
+            self.statusbar.showMessage(message)
+            return
+
         self.pBtn_Start_4.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
@@ -949,31 +973,36 @@ class MainUI( QMainWindow):
             print(message)
             self.statusbar.showMessage(message)
             
+            # try:
             try:
-                try:
-                    os.mkdir(os.path.join('data', mode))
-                except FileExistsError:
-                    pass
-                name = '_'.join([self.dateEdit.text(), self.lEd_MagnetSerial.text(), self.lEd_Suffix.text(),'.csv'])
-                prefferedFilename = os.path.join('data', mode, name)
-                filename, _ = QFileDialog.getSaveFileName(self, caption="Сохранить файл", directory=prefferedFilename, filter='CSV Files (*.csv);;All Files (*)')
-                
-                with open (filename, 'w') as f:
-                    f.write('Оператор -', self.lEd_Name.text(),'\n')
-                    f.write('Дата -', self.dateEdit.text(),'\n')
-                    f.write('Тип магнита -', self.cBox_MagnetType.text(),'\n')
-                    f.write('Серийный номер магнита -', self.lEd_MagnetSerial.text(),'\n')
-                    f.write('Режим работы -', self.cBox_OperatingModes.currentText(),'\n\n')
+                os.mkdir('data')
+            except FileExistsError:
+                pass
+            try:
+                os.mkdir(os.path.join('data', mode))
+            except FileExistsError:
+                pass
+            
+            name = '_'.join([self.dateEdit.text().replace('.','-'), self.lEd_MagnetSerial.text(), self.lEd_Suffix.text(),'.csv'])
+            prefferedFilename = os.path.join('data', mode, name)
+            filename, _ = QFileDialog.getSaveFileName(self, caption="Сохранить файл", directory=prefferedFilename, filter='CSV Files (*.csv);;All Files (*)')
+            
+            with open (filename, 'w') as f:
+                f.write(''.join(['Оператор - ', self.lEd_Name.text(),'\n']))
+                f.write(''.join(['Дата - ', self.dateEdit.text(),'\n']))
+                f.write(''.join(['Тип магнита - ', self.cBox_MagnetType.currentText(),'\n']))
+                f.write(''.join(['Серийный номер магнита - ', self.lEd_MagnetSerial.text(),'\n']))
+                f.write(''.join(['Режим работы - ', self.cBox_OperatingModes.currentText(),'\n\n']))
 
-                self.df_result.to_csv(filename, mode='a')
-                
-                message = "Сохранение данных закончено"
-                print(message)
-                self.statusbar.showMessage(message)
-            except:
-                message = "Ошибка сохранения файла"
-                print(message)
-                self.statusbar.showMessage(message)
+            self.df_result.to_csv(filename, mode='a')
+            
+            message = "Сохранение данных закончено"
+            print(message)
+            self.statusbar.showMessage(message)
+            # except:
+            #     message = "Ошибка сохранения файла"
+            #     print(message)
+            #     self.statusbar.showMessage(message)
         else:
             message = "Выполните сбор данных"
             print(message)
