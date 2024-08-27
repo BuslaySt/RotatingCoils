@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 from PyQt5.QtCore import Qt, QAbstractTableModel
 from PyQt5.QtGui import QIcon
 from PyQt5.uic import loadUi
@@ -959,11 +959,11 @@ class MainUI( QMainWindow):
                 filename, _ = QFileDialog.getSaveFileName(self, caption="Сохранить файл", directory=prefferedFilename, filter='CSV Files (*.csv);;All Files (*)')
                 
                 with open (filename, 'w') as f:
-                    f.write('Оператор -', lEd_Name.text(),'\n')
-                    f.write('Дата -', dateEdit.text(),'\n')
-                    f.write('Тип магнита -', cBox_MagnetType.text(),'\n')
-                    f.write('Серийный номер магнита -', lEd_MagnetSerial.text(),'\n')
-                    f.write('Режим работы -', cBox_OperatingModes.currentText(),'\n\n')
+                    f.write('Оператор -', self.lEd_Name.text(),'\n')
+                    f.write('Дата -', self.dateEdit.text(),'\n')
+                    f.write('Тип магнита -', self.cBox_MagnetType.text(),'\n')
+                    f.write('Серийный номер магнита -', self.lEd_MagnetSerial.text(),'\n')
+                    f.write('Режим работы -', self.cBox_OperatingModes.currentText(),'\n\n')
 
                 self.df_result.to_csv(filename, mode='a')
                 
