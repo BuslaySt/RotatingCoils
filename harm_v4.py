@@ -402,9 +402,9 @@ class MainUI( QMainWindow):
         # Закрытие и отключение осциллографа
         self.status["close"]=ps.ps5000aCloseUnit(self.chandle)
         assert_pico_ok(self.status["close"])
-        message = "Запись данных завершена"
-        print(message)
-        self.statusbar.showMessage(message)
+        # message = "Запись данных завершена."
+        # print(message)
+        # self.statusbar.showMessage(message)
 
     def resolutionUpdate(self) -> None:
         '''-- Выбор битности разрешения в зависимости от количества используемых каналов --'''
@@ -790,13 +790,13 @@ class MainUI( QMainWindow):
         df_header_v = self.df_result.index
         df_header_h = self.df_result.columns
 
-        model = PandasTableModel(df_result, df_header_h, df_header_v)
+        model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_1.setModel(model)
         self.pBtn_Save2File_1.setEnabled(True)
 
     def operate2(self) -> None:
         '''-- Выполнение режима 2 --'''
-        df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
+        self.df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
         try:
@@ -816,31 +816,31 @@ class MainUI( QMainWindow):
             # self.save_data2file(df, i) # Запись сырых данных на диск
 
             calculus_result = list(self.calculate_result(df2)) # Расчёт коэффициентов
-            df_result[i] = calculus_result[0]+calculus_result[1:5]
+            self.df_result[i] = calculus_result[0]+calculus_result[1:5]
             time.sleep(TimeDelay)
       
         self.pBtn_Start_2.setEnabled(True)
 
-        # df_result['mean'] = df_result.mean(axis=1)
-        # df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
-        # df_result["percent"] = (100*df_result["stdev"]/df_result["mean"].abs()).round(decimals=1)
+        # self.df_result['mean'] = self.df_result.mean(axis=1)
+        # self.df_result['stdev'] = self.df_result.drop(['mean'], axis=1).std(axis=1)
+        # self.df_result["percent"] = (100*self.df_result["stdev"]/self.df_result["mean"].abs()).round(decimals=1)
 
-        # print(df_result)
-        # df_result.to_csv("result_2.csv")
+        # print(self.df_result)
+        # self.df_result.to_csv("result_2.csv")
 
         # for i in range(1,MeasurementsNumber+1):
-        #     df_result.drop(i, axis=1, inplace=True)
+        #     self.df_result.drop(i, axis=1, inplace=True)
 
-        df_header_v = df_result.index
-        df_header_h = df_result.columns
+        df_header_v = self.df_result.index
+        df_header_h = self.df_result.columns
 
-        model = PandasTableModel(df_result, df_header_h, df_header_v)
+        model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_2.setModel(model)
         self.pBtn_Save2File_2.setEnabled(True)
 
     def operate3_start(self) -> None:
         '''-- Старт режима 3 --'''
-        df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
+        self.df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
         try:
@@ -858,7 +858,7 @@ class MainUI( QMainWindow):
         # self.save_data2file(df, i) # Запись сырых данных на диск
 
         calculus_result = list(self.calculate_result(df3)) # Расчёт коэффициентов
-        df_result[0] = calculus_result[0]+calculus_result[1:5]
+        self.df_result[0] = calculus_result[0]+calculus_result[1:5]
         self.MeasurementsNumber -= 1
         self.pBtn_Next_3.setEnabled(True)
         self.pBtn_Start_3.setEnabled(False)
@@ -873,25 +873,25 @@ class MainUI( QMainWindow):
         df3 = self.start_record_data()
         # self.save_data2file(df, i) # Запись сырых данных на диск
         calculus_result = list(self.calculate_result(df3)) # Расчёт коэффициентов
-        df_result[int(self.lEd_MeasurementsNumber_3.text()) - self.MeasurementsNumber] = calculus_result[0]+calculus_result[1:5]
+        self.df_result[int(self.lEd_MeasurementsNumber_3.text()) - self.MeasurementsNumber] = calculus_result[0]+calculus_result[1:5]
         self.MeasurementsNumber -= 1
 
     def operate3_fin(self) -> None:
         '''-- Завершение режима 3 --'''
-        df_result['mean'] = df_result.mean(axis=1)
-        df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
-        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"].abs()).round(decimals=1)
+        self.df_result['mean'] = self.df_result.mean(axis=1)
+        self.df_result['stdev'] = self.df_result.drop(['mean'], axis=1).std(axis=1)
+        self.df_result["percent"] = (100*self.df_result["stdev"]/self.df_result["mean"].abs()).round(decimals=1)
 
-        # print(df_result)
-        # df_result.to_csv("result_3.csv")
+        # print(self.df_result)
+        # self.df_result.to_csv("result_3.csv")
 
         # for i in range(1,MeasurementsNumber+1):
-        #     df_result.drop(i, axis=1, inplace=True)
+        #     self.df_result.drop(i, axis=1, inplace=True)
 
-        df_header_v = df_result.index
-        df_header_h = df_result.columns
+        df_header_v = self.df_result.index
+        df_header_h = self.df_result.columns
 
-        model = PandasTableModel(df_result, df_header_h, df_header_v)
+        model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_3.setModel(model)
         self.pBtn_Finish_3.setEnabled(False)
         self.pBtn_Start_3.setEnabled(True)
@@ -899,7 +899,7 @@ class MainUI( QMainWindow):
 
     def operate4(self) -> None:
         '''-- Выполнение режима 4 --'''
-        df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
+        self.df_result = pd.DataFrame(index=['harm01', 'harm02', 'harm03', 'harm04', 'harm05', 'harm06', 'harm07', 'harm08', 'harm09', 'harm10',
                                  'harm11', 'harm12', 'harm13', 'harm14', 'harm15', 'harm16', 'deltaX', 'deltaY', 'alpha', 'H_avg'])
 
         try:
@@ -919,32 +919,32 @@ class MainUI( QMainWindow):
             # self.save_data2file(df, i) # Запись сырых данных на диск
 
             calculus_result = list(self.calculate_result(df4)) # Расчёт коэффициентов
-            df_result[i] = calculus_result[0]+calculus_result[1:5]
+            self.df_result[i] = calculus_result[0]+calculus_result[1:5]
             time.sleep(TimeDelay)
       
         self.pBtn_Start_4.setEnabled(True)
 
-        df_result['mean'] = df_result.mean(axis=1)
-        df_result['stdev'] = df_result.drop(['mean'], axis=1).std(axis=1)
-        df_result["percent"] = (100*df_result["stdev"]/df_result["mean"].abs()).round(decimals=1)
+        self.df_result['mean'] = self.df_result.mean(axis=1)
+        self.df_result['stdev'] = self.df_result.drop(['mean'], axis=1).std(axis=1)
+        self.df_result["percent"] = (100*self.df_result["stdev"]/self.df_result["mean"].abs()).round(decimals=1)
 
-        # print(df_result)
-        # df_result.to_csv("result_4.csv")
+        # print(self.df_result)
+        # self.df_result.to_csv("result_4.csv")
 
         # for i in range(1,MeasurementsNumber+1):
-        #     df_result.drop(i, axis=1, inplace=True)
+        #     self.df_result.drop(i, axis=1, inplace=True)
 
-        df_header_v = df_result.index
-        df_header_h = df_result.columns
+        df_header_v = self.df_result.index
+        df_header_h = self.df_result.columns
 
-        model = PandasTableModel(df_result, df_header_h, df_header_v)
+        model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_4.setModel(model)
         self.pBtn_Save2File_4.setEnabled(True)
 
     def savedata(self, mode: str) -> None:
         '''-- Запись данных в файл --'''
         
-        if self.df_result:
+        if isinstance(self.df_result, pd.DataFrame) and not self.df_result.empty:
             message = "Запись данных в файл..."
             print(message)
             self.statusbar.showMessage(message)
