@@ -154,10 +154,10 @@ class MainUI( QMainWindow):
         self.pBtn_Start_1.clicked.connect(self.operating_mode1)
         # self.pBtn_Start_2.clicked.connect(self.operate2)
         self.pBtn_Start_2.clicked.connect(self.operating_mode2)
-        self.pBtn_Start_3.clicked.connect(self.operate3_start)
-        # self.pBtn_Start_3.clicked.connect(self.operating_mode3)
-        self.pBtn_Next_3.clicked.connect(self.operate3_next)
-        self.pBtn_Finish_3.clicked.connect(self.operate3_fin)
+        # self.pBtn_Start_3.clicked.connect(self.operate3_start)
+        self.pBtn_Start_3.clicked.connect(self.operating_mode3_start)
+        self.pBtn_Next_3.clicked.connect(self.operating_mode3_cont)
+        self.pBtn_Finish_3.clicked.connect(self.operating_mode3_fin)
         # self.pBtn_Start_4.clicked.connect(self.operate4)
         self.pBtn_Start_4.clicked.connect(self.operating_mode4)
 
@@ -737,10 +737,19 @@ class MainUI( QMainWindow):
         t2.start()
         # t2.join()
 
-    def operating_mode3(self) -> None:
+    def operating_mode3_start(self) -> None:
         '''-- Многопоточность для режима 3 --'''
-        return # TODO Заглушка для неработающего режима
-        t3 = threading.Thread(target=self.operate3, args=(), daemon=True)
+        t3 = threading.Thread(target=self.operate3_start, args=(), daemon=True)
+        t3.start()
+        # t3.join()
+    def operating_mode3_cont(self) -> None:
+        '''-- Многопоточность для режима 3 --'''
+        t3 = threading.Thread(target=self.operate3_next, args=(), daemon=True)
+        t3.start()
+        # t3.join()
+    def operating_mode3_fin(self) -> None:
+        '''-- Многопоточность для режима 3 --'''
+        t3 = threading.Thread(target=self.operate3_fin, args=(), daemon=True)
         t3.start()
         # t3.join()
 
@@ -888,11 +897,24 @@ class MainUI( QMainWindow):
             self.pBtn_Finish_3.setEnabled(True)
             return
 
+        self.pBtn_Next_3.setEnabled(False)
+
         df3 = self.start_record_data()
         # self.save_data2file(df, i) # Запись сырых данных на диск
         calculus_result = list(self.calculate_result(df3)) # Расчёт коэффициентов
         self.df_result[int(self.lEd_MeasurementsNumber_3.text()) - self.MeasurementsNumber] = calculus_result[0]+calculus_result[1:5]
         self.MeasurementsNumber -= 1
+
+        self.pBtn_Next_3.setEnabled(True)
+
+        if self.MeasurementsNumber >0:
+            message = "Следующее измерение"
+            print(message)
+            self.statusbar.showMessage(message)
+
+        if self.MeasurementsNumber == 0:
+            self.pBtn_Next_3.setEnabled(False)
+            self.pBtn_Finish_3.setEnabled(True)
 
     def operate3_fin(self) -> None:
         '''-- Завершение режима 3 --'''
@@ -911,6 +933,7 @@ class MainUI( QMainWindow):
 
         model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_3.setModel(model)
+
         self.pBtn_Finish_3.setEnabled(False)
         self.pBtn_Start_3.setEnabled(True)
         self.pBtn_Save2File_3.setEnabled(True)
@@ -966,7 +989,7 @@ class MainUI( QMainWindow):
         self.pBtn_Save2File_4.setEnabled(True)
 
     def savedata(self, mode: str) -> None:
-        '''-- Запись данных в файл --'''
+        '''-- Запись полученных данных в файл --'''
         
         if isinstance(self.df_result, pd.DataFrame) and not self.df_result.empty:
             message = "Запись данных в файл..."
@@ -1013,15 +1036,15 @@ class MainUI( QMainWindow):
         self.savedata('mode1')
 
     def operating_mode2_savedata(self) -> None:
-        '''-- Сохранение данных по кнопке первого метода --'''
+        '''-- Сохранение данных по кнопке второго метода --'''
         self.savedata('mode2')
 
     def operating_mode3_savedata(self) -> None:
-        '''-- Сохранение данных по кнопке первого метода --'''
+        '''-- Сохранение данных по кнопке третьего метода --'''
         self.savedata('mode3')
 
     def operating_mode4_savedata(self) -> None:
-        '''-- Сохранение данных по кнопке первого метода --'''
+        '''-- Сохранение данных по кнопке четвёртого метода --'''
         self.savedata('mode4')
 
     def calculate_result(self, df_name: pd.DataFrame) -> list:
@@ -1078,8 +1101,6 @@ if __name__ == '__main__':
     harm = MainUI()
     harm.show()
     
-    try:
-        print("Closing Window...")
-        app.exec_()
+    try: app.exec_()
     # try: sys.exit(app.exec_())
     except SystemExit: print("Closing Window...")
