@@ -779,9 +779,12 @@ class MainUI( QMainWindow):
             self.statusbar.showMessage(message)
             return
 
+
+
         self.pBtn_Start_1.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
+            self.lbl_Current_Measure_Nmb_1.setText(str(i))
             df1 = self.start_record_data()
 
             # self.save_data2file(df, i) # Запись сырых данных на диск
@@ -808,6 +811,7 @@ class MainUI( QMainWindow):
         model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_1.setModel(model)
         self.pBtn_Save2File_1.setEnabled(True)
+        self.lbl_Current_Measure_Nmb_1.setText('0')
 
     def operate2(self) -> None:
         '''-- Выполнение режима 2 --'''
@@ -832,6 +836,7 @@ class MainUI( QMainWindow):
         self.pBtn_Start_2.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
+            self.lbl_Current_Measure_Nmb_2.setText(str(i))
             df2 = self.start_record_data()
 
             # self.save_data2file(df, i) # Запись сырых данных на диск
@@ -858,6 +863,7 @@ class MainUI( QMainWindow):
         model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_2.setModel(model)
         self.pBtn_Save2File_2.setEnabled(True)
+        self.lbl_Current_Measure_Nmb_2.setText('0')
 
     def operate3_start(self) -> None:
         '''-- Старт режима 3 --'''
@@ -880,6 +886,7 @@ class MainUI( QMainWindow):
         
         self.pBtn_Start_3.setEnabled(False)
 
+        self.lbl_Current_Measure_Nmb_3.setText('1')
         df3 = self.start_record_data()
 
         # self.save_data2file(df, i) # Запись сырых данных на диск
@@ -899,6 +906,7 @@ class MainUI( QMainWindow):
 
         self.pBtn_Next_3.setEnabled(False)
 
+        self.lbl_Current_Measure_Nmb_3.setText(str(int(self.lEd_MeasurementsNumber_3.text()) - self.MeasurementsNumber + 1))
         df3 = self.start_record_data()
         # self.save_data2file(df, i) # Запись сырых данных на диск
         calculus_result = list(self.calculate_result(df3)) # Расчёт коэффициентов
@@ -937,6 +945,7 @@ class MainUI( QMainWindow):
         self.pBtn_Finish_3.setEnabled(False)
         self.pBtn_Start_3.setEnabled(True)
         self.pBtn_Save2File_3.setEnabled(True)
+        self.lbl_Current_Measure_Nmb_3.setText('0')
 
     def operate4(self) -> None:
         '''-- Выполнение режима 4 --'''
