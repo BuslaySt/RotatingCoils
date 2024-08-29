@@ -779,8 +779,6 @@ class MainUI( QMainWindow):
             self.statusbar.showMessage(message)
             return
 
-
-
         self.pBtn_Start_1.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
@@ -970,6 +968,7 @@ class MainUI( QMainWindow):
         self.pBtn_Start_4.setEnabled(False)
 
         for i in range(1,MeasurementsNumber+1):
+            self.lbl_Current_Measure_Nmb_4.setText(str(i))
             df4 = self.start_record_data()
 
             # self.save_data2file(df, i) # Запись сырых данных на диск
@@ -996,6 +995,7 @@ class MainUI( QMainWindow):
         model = PandasTableModel(self.df_result, df_header_h, df_header_v)
         self.tblView_Result_4.setModel(model)
         self.pBtn_Save2File_4.setEnabled(True)
+        self.lbl_Current_Measure_Nmb_4.setText('0')
 
     def savedata(self, mode: str) -> None:
         '''-- Запись полученных данных в файл --'''
