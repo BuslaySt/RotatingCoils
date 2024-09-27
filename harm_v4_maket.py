@@ -1034,7 +1034,7 @@ class MainUI( QMainWindow):
                 os.mkdir(os.path.join('data', mode))
             except FileExistsError:
                 pass
-            
+
             name = '_'.join([self.dateEdit.text().replace('.','-'), self.lEd_MagnetSerial.text(), self.lEd_Suffix.text(),'.csv'])
             prefferedFilename = os.path.join('data', mode, name)
             try:
@@ -1054,7 +1054,7 @@ class MainUI( QMainWindow):
                 message = "Запись файла не состоялась."
                 print(message)
                 self.statusbar.showMessage(message)
-            
+
         else:
             message = "Выполните сбор данных"
             print(message)
