@@ -1089,7 +1089,7 @@ class MainUI( QMainWindow):
         Q = []
 
         match self.cBox_MagnetType.currentIndex(): # Параметры катушек из инициализации
-            case 0 | 1:
+            case 0:
                 N = 2
                 magnet_type = 'quadrupole'
                 r = 1.915
@@ -1098,7 +1098,7 @@ class MainUI( QMainWindow):
                 coef_E = 2.56*pow(10, -5) # 1/39000
                 coef_C = 1*pow(10, -5)    #1/100000
                 magnet_length = 0.09   #длина магнита
-            case 2:
+            case 1:
                 N = 3
                 magnet_type = 'sextupole'
                 r = 2.065 #mm
@@ -1107,8 +1107,7 @@ class MainUI( QMainWindow):
                 coef_E = 2.56*pow(10, -5) # 1/39000
                 coef_C = 1*pow(10, -5)    #1/100000
                 magnet_length = 0.090   #длина магнита m
-            
-            case 3:
+            case 2:
                 N = 4
                 magnet_type = 'octupole'
                 r = 1.79 #mm
