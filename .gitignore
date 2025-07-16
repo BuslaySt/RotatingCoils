@@ -5,3 +5,4 @@ __pycache__/resources_rc.cpython-310.pyc
 __pycache__/harmonic.cpython-310.pyc
 /build
 /dist
+/venv
