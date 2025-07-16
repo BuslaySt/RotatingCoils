@@ -6,3 +6,4 @@ __pycache__/harmonic.cpython-310.pyc
 /build
 /dist
 /venv
+/__pycache__
