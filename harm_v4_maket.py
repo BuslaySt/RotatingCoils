@@ -689,8 +689,9 @@ class MainUI( QMainWindow):
         df = pd.DataFrame(self.data)
         df['D0'] = df['D0'].apply(int)
         df['D1'] = df['D1'].apply(int)
-
-        #self.save_data2file(df)
+        
+        if self.cBox_SaveRawData.isChecked():
+            self.save_data2file(df)
         return df
 
     def save_data2file(self, df: pd.DataFrame, i: int = '') -> None:
