@@ -675,7 +675,7 @@ class MainUI( QMainWindow):
             adc2mVChDMax = adc2mV(bufferDMax, self.chRange["D"], self.maxADC)
             self.data['ch_d'] = adc2mVChDMax
 
-        # TODO: Уточнить проверку на выход за пределы измерений
+        # Проверка на выход за пределы измерений каналов
         message = f'Валидация - {self.validate_data_range()}'
         print(message)
         self.statusbar.showMessage(message)
@@ -709,21 +709,25 @@ class MainUI( QMainWindow):
         self.statusbar.showMessage(message)
     
     def validate_data_range(self) -> dict:
-        ''' TODO: -- Проверка выхода измерений за предел канала --'''
+        ''' -- Проверка выхода измерений за предел канала --'''
         df = pd.DataFrame(self.data)
+        chkmsg = ''
         if self.chkBox_Ch1Enable.isChecked():
-            if df['ch_a'].max() >= self.channel_maxrange(self.cBox_Ch1Range):
-                return ('a', df['ch_a'].max())
+            if max(df['ch_a'].max(), -df['ch_a'].min()) >= self.channel_maxrange(self.cBox_Ch1Range):
+                chkmsg += f'A - выход за предел канала: {df['ch_a'].max()} '
         if self.chkBox_Ch2Enable.isChecked():
-            if df['ch_b'].max() >= self.channel_maxrange(self.cBox_Ch2Range):
-                return ('b', df['ch_b'].max())
+            if max(df['ch_b'].max(), -df['ch_b'].min()) >= self.channel_maxrange(self.cBox_Ch2Range):
+                chkmsg += f'B - выход за предел канала: {df['ch_b'].max()} '
         if self.chkBox_Ch3Enable.isChecked():
-            if df['ch_c'].max() >= self.channel_maxrange(self.cBox_Ch3Range):
-                return ('c', df['ch_c'].max())
+            if max(df['ch_c'].max(), -df['ch_c'].min()) >= self.channel_maxrange(self.cBox_Ch3Range):
+                chkmsg += f'C - выход за предел канала: {df['ch_c'].max()} '
         if self.chkBox_Ch4Enable.isChecked():
-            if df['ch_d'].max() >= self.channel_maxrange(self.cBox_Ch4Range):
-                return ('d', df['ch_d'].max())
-        return('ok')
+            if max(df['ch_d'].max(), -df['ch_d'].min()) >= self.channel_maxrange(self.cBox_Ch4Range):
+                chkmsg += f'D - выход за предел канала: {df['ch_d'].max()} '
+        if chkmsg:
+            return chkmsg
+        else:
+            return('ok')
 
     def operating_mode1(self) -> None:
         '''-- Многопоточность для режима 1 --'''
