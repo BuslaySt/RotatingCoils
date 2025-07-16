@@ -329,6 +329,19 @@
             </rect>
            </property>
           </widget>
+          <widget class="QCheckBox" name="cBox_SaveRawData">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>160</y>
+             <width>211</width>
+             <height>20</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Сохранять промежуточные данные</string>
+           </property>
+          </widget>
          </widget>
         </item>
        </layout>
