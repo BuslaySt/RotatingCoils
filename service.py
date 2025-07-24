@@ -61,25 +61,7 @@ def minus_constant (input_channel, zeroPos_start, zeroPos_end):
             Индекс строки датафрейма, в которой зарегистрирован 
             последний нулевой импульс энкодера в датафрейме     
     '''
-    '''
     
-    ch_name = input_channel.to_numpy()
-    constant = np.mean(ch_name)
-    data_stream = np.array(ch_name)
-    channel_name_norm = data_stream - constant
-    
-    #old code
-    constant = sum(input_channel[k] for k in range (zeroPos_start, zeroPos_end + 1))/ ((zeroPos_end+1)-zeroPos_start) 
-    channel_name_norm = []   
-    for i in tqdm(range(zeroPos_start, zeroPos_end + 1), desc = 'Коррекция постоянной составляющей во входном сигнале'):
-        channel_name_norm.append(input_channel[i] - constant)
-    
-    #new code
-    constant = sum(input_channel[zeroPos_start:zeroPos_end + 1])/ len(input_channel[zeroPos_start:zeroPos_end + 1])
-    channel_name_norm = []   
-    for i in tqdm(range(zeroPos_start, zeroPos_end + 1), desc = 'Проводится коррекция входного сигнала...'):
-        channel_name_norm.append(input_channel[i] - constant)
-    '''
     constant = sum(input_channel[zeroPos_start:zeroPos_end + 1])/ len(input_channel[zeroPos_start:zeroPos_end + 1])
     channel_name_norm = [(input_channel[n] - constant) for n in tqdm(range(zeroPos_start, zeroPos_end + 1))]
 
