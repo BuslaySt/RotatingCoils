@@ -2,15 +2,19 @@
 # находит нулевые импульсы и отдельные угловые импульсы 
 # проводит интегрирование по одному периоду и далее усреднение по нескольким периодам
 
-#Version 3 - 07/06/24 - разделение по разным модулям
+# Version 4 - 24/07/25 - разделение по разным модулям
+#
+# Changelog: часть функций из модуля calc вынесены в универсальный модуль service. Код существенно упрощен, исправлены ошибки,  
+# повышено быстродействие. 
+#
 
 import pandas as pd
 import numpy as np
 import math
+import service
 
-from tqdm import tqdm   # Progress bar
 from icecream import ic # Debug print
-import calc             # Самоимпорт для совместимости кода
+import calc            # Самоимпорт для совместимости кода
 import qs  #модуль вычисления коэффициентов и параметров для квадруполей и секступолей
 import oct #модуль вычисления коэффициентов и параметров для октуполей
 import time
@@ -18,7 +22,7 @@ import pathlib
 import os
 from datetime import date
 
-
+#ic.disable()
 def integrate_dataframe(df_name, coef_E, coef_C, quant, time_coef) -> tuple:
     '''
       
@@ -48,31 +52,22 @@ def integrate_dataframe(df_name, coef_E, coef_C, quant, time_coef) -> tuple:
         time_coef : float
             Перевод из формата АЦП в секунды
     
-    
     '''
     
     timestamp = df_name.timestamp 
-    ch_E = df_name.ch_a      #: channel_A = некомпенсированный сигнал
-    ch_C = df_name.ch_c #: channel_C = компенсированный канал
+    #ch_E = df_name.ch_a      #: channel_A = некомпенсированный сигнал
+    #ch_C = df_name.ch_c #: channel_C = компенсированный канал
     zeroPulse = df_name.D0 # канал импульса оборота
-    
     angular_step = 160/quant #:160 - 1 градус поворота, quant - доля градуса
-    ch_E_norm = []
-    compSignal_norm = []
-   
+       
     ic('Чтение датафрейма проведено успешно')
     
     zeroPos = []
-    tickPos = []
-        
-    for i in tqdm(df_name[df_name.D0 == 1].index):
-        if (df_name.iloc[i-1].D0 == 0) & (df_name.iloc[i].D0 == 1):
-            zeroPos.append(i)
-               
+    zeroPos = [n for n in df_name[df_name.D0 == 1].index if (df_name.iloc[n-1].D0 == 0) & (df_name.iloc[n].D0 == 1)]
     ic('Количество периодов: ', len(zeroPos))
     ic(zeroPos)    
     
-    start_period = 1
+    start_period = 0
     end_period = len(zeroPos)-1
     
     periods = range(start_period, end_period)
@@ -82,150 +77,78 @@ def integrate_dataframe(df_name, coef_E, coef_C, quant, time_coef) -> tuple:
     allPeriodC = []
     allPeriodUc = []
     
-    #вычисление постоянной составляющей
-           
-    ch_E_norm = calc.minus_constant (ch_E, zeroPos[0], zeroPos[-1])
-    compSignal_norm = calc.minus_constant (ch_C, zeroPos[0], zeroPos[-1])
-        
+    #вычитание постоянной составляющей из сигналов
+    print('Вычисление постоянной составляющей в канале E')       
+    ch_E_avg = service.avg_constant (df_name.ch_a, zeroPos[0], zeroPos[-1])
+    
+    print('Вычисление постоянной составляющей в канале C')
+    compSignal_avg = service.avg_constant (df_name.ch_c, zeroPos[0], zeroPos[-1])
+    dx = abs(time_coef * (timestamp[1] - timestamp[0])) #перевод отметок времени из нс в с 
+    ic(dx)       
     # Интегрирование по каждому периоду отдельно
-     
     for p in periods:
-        
+        ch_E_norm = []
+        compSignal_norm = []
         tickPos = []
         df_work = df_name[zeroPos[p]:zeroPos[p+1]].reset_index(drop = True)
         tick = dict([(i,d) for i,d in zip(df_work.index, df_work.D1)])
-        
+        ch_E_norm = np.array(df_work.ch_a) - ch_E_avg
+        ic(len(ch_E_norm))
+        compSignal_norm = np.array(df_work.ch_c) - compSignal_avg
+        ic(len(compSignal_norm))
+
         for j in (df_work[df_work.D1 == 1].index):
             if (j == 0) & (tick[j] == 1):
                 tickPos.append(j)
             elif (j > 0) & (tick[j] == 1) & (tick[j-1] == 0):
                 tickPos.append(j)
-
              
-        delta = tickPos[1] - tickPos[0]
-        ic(len(tickPos))
-        ic(delta)
+        #delta = tickPos[1] - tickPos[0]
         ic('Integral calculation for period', p)
-        dx = abs(time_coef * (df_work.timestamp[1] - df_work.timestamp[0])) #перевод отметок времени из нс в с 
-        ic(dx)
-                
+        ic(len(tickPos))
+        #ic(delta)
         intC = []
         intUc = []
-        counter = 0
-        start = zeroPos[p]
-        finish = zeroPos[p+1]
-        period = finish - start
-        startPos = []
-        #поиск границ отдельных периодов для вычисления интеграла по ним
-        for i in range(len(tickPos)):
-            counter = 0
-            if (tickPos[i] <= delta):
-                startPos.append(i)
-                ic(startPos)
-                ic(start)
-                
-            if ((period - tickPos[i]) <= delta):
-                finishPos = i
-                
-                ic(tickPos[finishPos])
-                ic(finish)
         
-        curr_pos = 0
-        sumC = 0
-        sumU = 0
-        for pos in tickPos[startPos[0]:finishPos+1]:
+        period = len(df_work)
+        ic(period)
+        
+        #поиск границ отдельных периодов для вычисления интеграла по ним
+                
+        counter = 0
+        start = tickPos[0]
+        sumC_current = compSignal_norm[start]
+        sumU_current = ch_E_norm[start]
+                
+        for pos in tickPos:
             counter +=1
             if counter == angular_step:
-                curr_pos = pos 
-                
-                for int_counter in range(start, curr_pos+1):
-                    
-                    sumC += compSignal_norm[int_counter]
-                    sumU += ch_E_norm[int_counter]
+                sumC_current = sumC_current + sum(compSignal_norm[start:pos+1]) 
+                sumU_current = sumU_current + sum(ch_E_norm[start:pos+1])
                                 
-                intC.append(coef_C*sumC*dx)
-                intUc.append(coef_E*sumU*dx)
+                intC.append(coef_C*sumC_current*dx)
+                intUc.append(coef_E*sumU_current*dx)
                 counter = 0
-                start = curr_pos + 1
+                start = pos + 1
             
-            if curr_pos > finish:
-                break
-        
+                    
         ic(len(intC))
         ic(len(intUc))
                
-        corrIntUc = calc.minus_integration_constant(intUc)
-        
-        allPeriodC.append(intC)
+        corrIntUc = service.minus_integration(intUc)
+        corrIntС = service.minus_integration(intC)
+        allPeriodC.append(corrIntС)
         allPeriodUc.append(corrIntUc)
     
-    avgIntC = calc.array_averaging(allPeriodC)
-    avgIntUc = calc.array_averaging(allPeriodUc) 
+    avgIntC = service.array_averaging(allPeriodC)
+    avgIntUc = service.array_averaging(allPeriodUc)
+    avgValC = np.mean(avgIntC) 
+    avgValUc = np.mean(avgIntUc)
+    avgIntC = np.array(avgIntC) - avgValC
+    avgIntUc = np.array(avgIntUc) - avgValUc
     
-    return avgIntC, avgIntUc 
+    return avgIntC, avgIntUc
 
-def array_averaging (allPeriod) -> tuple:
-  
-    '''
-    Функция выполняет вычисление усредненного значения интегралов 
-    по нескольким периодам через транспонирование двумерного списка.			
-     ------------------------------------------------------------------------------------
-    Переменные
-        
-        allPeriod : list
-            Двумерный список. Каждая строка списка представляет собой 
-            отдельный список, являющийся интегрированным сигналом 
-            по одному периоду датафрейма. 
-
-    ''' 
-    
-    avgArr = []
-    arr = np.asarray(allPeriod)
-    arrTransp = arr.transpose()
-    
-    for item in arrTransp:
-        avgArr.append(sum(item)/len(arr))
-   
-    return (avgArr)
-
-def minus_integration_constant (integral_list):
-    '''
-    Функция убирает постоянную составляющую после интегрирования. 
-    ------------------------------------------------------------------------------------
-    Переменные
-    
-        integral_list : list
-            Список с отметками интегрированного сигнала по одному периоду из всего 
-            датафрейма. Применяется к каждому периоду из датафрейма.
-            
-    '''
-    corrected_integral = []
-    for teta in range(len(integral_list)):
-        corrected_integral.append(integral_list[teta] - teta*integral_list[-1]/len(integral_list))
-    return corrected_integral
-
-def minus_constant (channel_name, zeroPos_start, zeroPos_end):
-    '''
-    Функция убирает постоянную составляющую из входного сигнала. 
-    ------------------------------------------------------------------------------------
-    Переменные
-    
-        channel_name : столбец датафрейма
-            Наименование столбца из входного датафрейма, 
-            к которому применяется коррекция
-        zeroPos_start : int
-            Индекс строки датафрейма, в которой зарегистрирован 
-            первый нулевой импульс энкодера в датафрейме
-        zeroPos_end : int
-            Индекс строки датафрейма, в которой зарегистрирован 
-            последний нулевой импульс энкодера в датафрейме     
-    '''
-    constant = sum(channel_name[k] for k in range (zeroPos_start, zeroPos_end + 1))/ ((zeroPos_end+1)-zeroPos_start) 
-    channel_name_norm = []   
-    for i in tqdm(range(zeroPos_start, zeroPos_end + 1), desc = 'Коррекция постоянной составляющей во входном сигнале'):
-        channel_name_norm.append(channel_name[i] - constant)
- 
-    return channel_name_norm
 
 def fourier (integral_compensated_value, integral_uncompensated_value, N, quant):
     
@@ -240,8 +163,6 @@ def fourier (integral_compensated_value, integral_uncompensated_value, N, quant)
     start = 0 #начальный угол
     end = 360
     period = np.arange(start+1/quant, end+1/quant, 1/quant)
-    
-    
     ic(len(period))
 
     for n in range (1, depth+1):
@@ -249,11 +170,10 @@ def fourier (integral_compensated_value, integral_uncompensated_value, N, quant)
         f_sin = []
         sumC = 0
         sumS = 0
-                       
-        for count, teta in enumerate(period):
+        
         #подынтегральные выражения для расчета коэффициентов разложения в ряд Фурье
-            f_cos.append(integral_compensated_value[count]*math.cos(n*teta*math.pi/180))
-            f_sin.append(integral_compensated_value[count]*math.sin(n*teta*math.pi/180))
+        f_cos = [(integral_compensated_value[count]*math.cos(n*teta*math.pi/180)) for count, teta in enumerate(period)]
+        f_sin = [(integral_compensated_value[count]*math.sin(n*teta*math.pi/180)) for count, teta in enumerate(period)]
     
         sumC = sum(f_cos)
         sumS = sum(f_sin)
@@ -269,10 +189,10 @@ def fourier (integral_compensated_value, integral_uncompensated_value, N, quant)
     
         sum_C = 0
         sum_S = 0
-        for count, teta in enumerate(period):
+        
         #подынтегральные выражения для расчета коэффициентов разложения в ряд Фурье
-            F_cos.append(integral_uncompensated_value[count]*math.cos(n*(teta)*math.pi/180))
-            F_sin.append(integral_uncompensated_value[count]*math.sin(n*(teta)*math.pi/180))#
+        F_cos = [(integral_uncompensated_value[count]*math.cos(n*(teta)*math.pi/180)) for count, teta in enumerate(period)]
+        F_sin = [(integral_uncompensated_value[count]*math.sin(n*(teta)*math.pi/180)) for count, teta in enumerate(period)]#
     
         sum_C = sum(F_cos)
         sum_S = sum(F_sin)
@@ -333,12 +253,12 @@ def run (df_name, parameters):
     time_coef = math.pow(10, -9)
     intC = []
     intU = []
-
+    
     intC, intU = calc.integrate_dataframe(df_name, coef_E, coef_C, quant, time_coef)
     P, Q, p, q = calc.fourier(intC, intU, N, quant)
     calc_result = calc.values_computation(P, Q, p, q, parameters)
     ic('DFT coefs are ready')
-    return calc_result
+    return calc_result  #, intC, intU - отключен вывод внутренних данных, необходимых для программы диагностики
 
 def values_computation(P, Q, p, q, parameters):
     '''
@@ -451,7 +371,7 @@ if __name__ == "__main__":
     dirPath = pathlib.Path(__file__).parent
     result_dir = pathlib.Path('result') # каталог для сохранения результатов обработки
     
-    data_dir = pathlib.Path('data') # каталог с данными, подлежащими обработке
+    data_dir = pathlib.Path('src_data') # каталог с данными, подлежащими обработке
     P = []
     Q = []
     spectrum = []
@@ -470,7 +390,7 @@ if __name__ == "__main__":
     filename = collect_csv_files(data_dir)
 
     #запрос количества полюсов магнита
-    N = 4#int(input('Input N for 2n-pole magnet: '))
+    N = 2#int(input('Input N for 2n-pole magnet: '))
         
     quant = 1
             
